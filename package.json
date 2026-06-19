@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "bot:dev": "bun run bot/dev.ts"
+    "bot:dev": "bun run bot/dev.ts",
+    "rag:ingest": "bun run lib/rag/ingest.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",
