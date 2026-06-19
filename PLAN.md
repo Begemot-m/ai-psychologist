@@ -12,13 +12,17 @@
 ## Фазы
 
 - [x] **Фаза 0** — PLAN.md, ARCHITECTURE.md, git/GitHub, `.env.example`
-- [ ] **Фаза 1** — скаффолд Next.js + Supabase, схема БД (users, conversations, messages, usage, subscriptions, modules) + pgvector
-- [ ] **Фаза 2** — запуск мини-аппа в Telegram, валидация `initData`, онбординг-тест
-- [ ] **Фаза 3** — маркетплейс модулей + конфиг-движок
-- [ ] **Фаза 4** — чат-пайплайн: LLM-прокси + safety-слой + RAG + квоты
-- [ ] **Фаза 5** — пейволл на Telegram Stars + вебхук оплаты
-- [ ] **Фаза 6** — дизайн-система Goldapple/violet, полировка UI
-- [ ] **Финал** — README с инструкцией запуска
+- [x] **Фаза 1** — скаффолд Next.js + Supabase, схема БД (users, conversations, messages, usage, subscriptions, modules) + pgvector
+- [x] **Фаза 2** — запуск мини-аппа в Telegram, валидация `initData`, онбординг-тест
+- [x] **Фаза 3** — маркетплейс модулей + конфиг-движок
+- [x] **Фаза 4** — чат-пайплайн: LLM-прокси + safety-слой + RAG + квоты
+- [x] **Фаза 5** — пейволл на Telegram Stars + вебхук оплаты
+- [x] **Фаза 6** — дизайн-система Goldapple/violet, полировка UI
+- [x] **Финал** — README с инструкцией запуска
+
+Код написан и собирается (`bun run build` проходит чисто), но не запущен живьём: нет реальных
+ключей Anthropic/Supabase/Voyage/Telegram и реальной Supabase-базы — см. «Открытые вопросы и
+блокеры» ниже и инструкцию в [README.md](./README.md).
 
 ## Definition of Done
 
