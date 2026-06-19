@@ -61,8 +61,8 @@ export default function ChatPage() {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <header className="border-b border-[var(--surface-border)] px-6 py-4">
-        <h1 className="text-lg font-medium">{moduleTitle ?? "Чат"}</h1>
+      <header className="border-b border-[var(--surface-border)] px-6 py-5">
+        <h1 className="text-xl font-semibold">{moduleTitle ?? "Чат"}</h1>
       </header>
 
       <div className="flex-1 space-y-3 overflow-y-auto px-6 py-4">
@@ -70,7 +70,7 @@ export default function ChatPage() {
           <div
             key={i}
             className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-              m.role === "user" ? "ml-auto bg-[var(--accent)] text-white" : "bg-[var(--surface)]"
+              m.role === "user" ? "ml-auto bg-[var(--accent)] text-white" : "glass-card"
             } ${m.is_crisis ? "border border-amber-400" : ""}`}
           >
             {m.content}

@@ -57,14 +57,14 @@ export default function OnboardingPage() {
       <div className="text-sm text-[var(--muted)]">
         Вопрос {step + 1} из {onboardingQuestions.length}
       </div>
-      <h1 className="text-2xl font-semibold">{question.text}</h1>
+      <h1 className="text-3xl font-semibold">{question.text}</h1>
       <div className="flex flex-col gap-3">
         {question.options.map((option) => (
           <button
             key={option.value}
             disabled={submitting}
             onClick={() => selectAnswer(option.value)}
-            className="rounded-xl border border-[var(--surface-border)] bg-[var(--surface)] px-4 py-3 text-left transition hover:border-[var(--accent)]"
+            className="glass-card rounded-xl px-4 py-3 text-left transition hover:border-[var(--accent)]"
           >
             {option.label}
           </button>

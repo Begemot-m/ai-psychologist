@@ -30,16 +30,15 @@ export default function MarketplacePage() {
 
   return (
     <main className="flex min-h-screen flex-col gap-8 px-6 py-10">
-      <h1 className="text-2xl font-semibold">Выбери модуль</h1>
+      <h1 className="text-3xl font-semibold">Выбери модуль</h1>
 
       <div className="flex flex-col gap-4">
         {activeModules.map((module) => (
           <div
             key={module.id}
-            className="rounded-2xl border p-5"
+            className="glass-card rounded-2xl p-5"
             style={{
-              borderColor: module.id === recommendedId ? module.ui_accent : "var(--surface-border)",
-              backgroundColor: "var(--surface)",
+              borderColor: module.id === recommendedId ? module.ui_accent : undefined,
             }}
           >
             <div className="flex items-center gap-2">
@@ -71,7 +70,7 @@ export default function MarketplacePage() {
         {comingSoonModules.map((module) => (
           <div
             key={module.title}
-            className="rounded-2xl border border-dashed border-[var(--surface-border)] p-4 opacity-50"
+            className="glass-card rounded-2xl border-dashed p-4 opacity-50"
           >
             <h4 className="font-medium">{module.title}</h4>
             <p className="text-sm text-[var(--muted)]">{module.description}</p>
