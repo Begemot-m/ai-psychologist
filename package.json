@@ -1,12 +1,13 @@
 {
-  "name": "scaffold-tmp",
+  "name": "ai-psychologist",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "bot:dev": "bun run bot/dev.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",
