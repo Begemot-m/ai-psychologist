@@ -8,15 +8,21 @@ export async function retrieveContext(
   kbNamespace: string,
   matchCount = 5,
 ): Promise<RetrievedChunk[]> {
-  const embedding = await embedText(query, "query");
-  const supabase = createServiceClient();
+  if (!process.env.VOYAGE_API_KEY) return [];
 
-  const { data, error } = await supabase.rpc("match_knowledge_chunks", {
-    query_embedding: embedding,
-    match_namespace: kbNamespace,
-    match_count: matchCount,
-  });
+  try {
+    const embedding = await embedText(query, "query");
+    const supabase = createServiceClient();
 
-  if (error || !data) return [];
-  return data as RetrievedChunk[];
+    const { data, error } = await supabase.rpc("match_knowledge_chunks", {
+      query_embedding: embedding,
+      match_namespace: kbNamespace,
+      match_count: matchCount,
+    });
+
+    if (error || !data) return [];
+    return data as RetrievedChunk[];
+  } catch {
+    return [];
+  }
 }

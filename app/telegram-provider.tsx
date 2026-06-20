@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { init, useRawInitData } from "@telegram-apps/sdk-react";
+import { init, retrieveRawInitData } from "@telegram-apps/sdk-react";
 
 export type AuthUser = {
   id: string;
@@ -22,34 +22,37 @@ export function useAuthUser() {
 }
 
 export function TelegramProvider({ children }: { children: ReactNode }) {
+  const [raw, setRaw] = useState<string | undefined>(undefined);
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     try {
       init();
+      setRaw(retrieveRawInitData());
     } catch {
       // не внутри Telegram (например, локальная разработка в браузере)
+      setRaw(undefined);
     }
     setInitialized(true);
   }, []);
 
   if (!initialized) return null;
-  return <AuthGate>{children}</AuthGate>;
+  return <AuthGate raw={raw}>{children}</AuthGate>;
 }
 
-function AuthGate({ children }: { children: ReactNode }) {
-  const raw = useRawInitData();
+function AuthGate({ raw, children }: { raw: string | undefined; children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
   useEffect(() => {
-    if (!raw) {
+    const isDev = process.env.NODE_ENV !== "production";
+    if (!raw && !isDev) {
       setStatus("error");
       return;
     }
     fetch("/api/auth", {
       method: "POST",
-      headers: { Authorization: `tma ${raw}` },
+      headers: raw ? { Authorization: `tma ${raw}` } : { "x-dev-bypass": "true" },
     })
       .then((res) => {
         if (!res.ok) throw new Error("auth failed");

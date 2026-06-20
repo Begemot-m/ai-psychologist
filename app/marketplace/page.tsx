@@ -30,7 +30,9 @@ export default function MarketplacePage() {
 
   return (
     <main className="flex min-h-screen flex-col gap-8 px-6 py-10">
-      <h1 className="text-3xl font-semibold">Выбери модуль</h1>
+      <h1 className="text-3xl font-medium">
+        Выбери <span className="gradient-text">модуль</span>
+      </h1>
 
       <div className="flex flex-col gap-4">
         {activeModules.map((module) => (
@@ -57,7 +59,7 @@ export default function MarketplacePage() {
             <button
               disabled={pendingId === module.id}
               onClick={() => selectModule(module.id)}
-              className="mt-4 rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)]"
+              className="mt-4 rounded-lg bg-[var(--accent-strong)] px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
             >
               {pendingId === module.id ? "Открываем…" : "Выбрать"}
             </button>

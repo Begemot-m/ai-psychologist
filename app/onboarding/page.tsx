@@ -57,7 +57,7 @@ export default function OnboardingPage() {
       <div className="text-sm text-[var(--muted)]">
         Вопрос {step + 1} из {onboardingQuestions.length}
       </div>
-      <h1 className="text-3xl font-semibold">{question.text}</h1>
+      <h1 className="text-3xl font-medium">{question.text}</h1>
       <div className="flex flex-col gap-3">
         {question.options.map((option) => (
           <button

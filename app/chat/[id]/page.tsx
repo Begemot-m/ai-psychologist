@@ -62,7 +62,7 @@ export default function ChatPage() {
   return (
     <main className="flex min-h-screen flex-col">
       <header className="border-b border-[var(--surface-border)] px-6 py-5">
-        <h1 className="text-xl font-semibold">{moduleTitle ?? "Чат"}</h1>
+        <h1 className="text-xl font-medium">{moduleTitle ?? "Чат"}</h1>
       </header>
 
       <div className="flex-1 space-y-3 overflow-y-auto px-6 py-4">
@@ -70,7 +70,7 @@ export default function ChatPage() {
           <div
             key={i}
             className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-              m.role === "user" ? "ml-auto bg-[var(--accent)] text-white" : "glass-card"
+              m.role === "user" ? "ml-auto bg-[var(--accent-strong)] text-white" : "glass-card"
             } ${m.is_crisis ? "border border-amber-400" : ""}`}
           >
             {m.content}
@@ -92,12 +92,12 @@ export default function ChatPage() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
           placeholder="Напиши сообщение…"
-          className="flex-1 rounded-full border border-[var(--surface-border)] bg-[var(--surface)] px-4 py-2 outline-none"
+          className="flex-1 rounded-lg border border-[var(--surface-border)] bg-[var(--surface)] px-4 py-2.5 outline-none"
         />
         <button
           onClick={send}
           disabled={sending}
-          className="rounded-full bg-[var(--accent)] px-5 py-2 text-sm font-medium text-white"
+          className="rounded-lg bg-[var(--accent-strong)] px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
         >
           Отправить
         </button>
