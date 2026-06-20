@@ -42,12 +42,12 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
 
 function AuthGate({ raw, children }: { raw: string | undefined; children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "ready" | "no-telegram" | "auth-failed">("loading");
 
   useEffect(() => {
     const isDev = process.env.NODE_ENV !== "production";
     if (!raw && !isDev) {
-      setStatus("error");
+      setStatus("no-telegram");
       return;
     }
     fetch("/api/auth", {
@@ -62,16 +62,24 @@ function AuthGate({ raw, children }: { raw: string | undefined; children: ReactN
         setUser(data.user);
         setStatus("ready");
       })
-      .catch(() => setStatus("error"));
+      .catch(() => setStatus("auth-failed"));
   }, [raw]);
 
   if (status === "loading") {
     return <div className="flex min-h-screen items-center justify-center">Загрузка…</div>;
   }
-  if (status === "error") {
+  if (status === "no-telegram") {
     return (
       <div className="flex min-h-screen items-center justify-center px-6 text-center">
         Откройте приложение через Telegram
+      </div>
+    );
+  }
+  if (status === "auth-failed") {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-6 text-center text-sm text-[var(--muted)]">
+        Не удалось авторизоваться — проверь SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY в .env
+        (см. логи сервера для деталей).
       </div>
     );
   }
