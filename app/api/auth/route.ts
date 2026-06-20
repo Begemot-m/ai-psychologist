@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseAndValidateInitData } from "@/lib/telegram/initData";
 import { createServiceClient } from "@/lib/supabase/server";
+import { isPreviewMode, PREVIEW_USER_ID } from "@/lib/preview";
 
 const DEV_TELEGRAM_ID = 1;
 
 export async function POST(req: NextRequest) {
+  if (isPreviewMode()) {
+    return NextResponse.json({
+      user: { id: PREVIEW_USER_ID, onboardingCompleted: false, recommendedModuleId: null },
+    });
+  }
+
   let telegramId: number;
   let username: string | null;
 

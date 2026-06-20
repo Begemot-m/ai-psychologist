@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getModuleById } from "@/config/modules";
+import { isPreviewMode } from "@/lib/preview";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -9,6 +10,10 @@ export async function POST(req: NextRequest) {
 
   if (!userId || !moduleId || !getModuleById(moduleId)) {
     return NextResponse.json({ error: "invalid userId or moduleId" }, { status: 400 });
+  }
+
+  if (isPreviewMode()) {
+    return NextResponse.json({ conversationId: `preview-${moduleId}` });
   }
 
   const supabase = createServiceClient();

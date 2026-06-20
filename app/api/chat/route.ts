@@ -7,6 +7,7 @@ import { checkQuota } from "@/lib/billing/quota";
 import { retrieveContext } from "@/lib/rag/retrieve";
 import { getAnthropicClient } from "@/lib/llm/anthropic";
 import { summarizeHistory } from "@/lib/llm/summarize";
+import { isPreviewMode, previewCannedReplies } from "@/lib/preview";
 
 const SUMMARIZE_THRESHOLD = 20;
 const KEEP_RECENT = 6;
@@ -18,6 +19,11 @@ export async function POST(req: NextRequest) {
 
   if (!conversationId || !content) {
     return NextResponse.json({ error: "missing conversationId or content" }, { status: 400 });
+  }
+
+  if (isPreviewMode() && conversationId.startsWith("preview-")) {
+    const reply = previewCannedReplies[content.length % previewCannedReplies.length];
+    return NextResponse.json({ reply, isCrisis: false });
   }
 
   const supabase = createServiceClient();

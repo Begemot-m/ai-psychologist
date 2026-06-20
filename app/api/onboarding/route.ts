@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { recommendModuleId, type OnboardingTopic } from "@/config/onboarding";
+import { isPreviewMode } from "@/lib/preview";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -12,6 +13,10 @@ export async function POST(req: NextRequest) {
   }
 
   const recommendedModuleId = answers?.length ? recommendModuleId(answers) : null;
+
+  if (isPreviewMode()) {
+    return NextResponse.json({ recommendedModuleId });
+  }
 
   const supabase = createServiceClient();
   const { error } = await supabase

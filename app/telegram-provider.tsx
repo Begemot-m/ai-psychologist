@@ -46,7 +46,8 @@ function AuthGate({ raw, children }: { raw: string | undefined; children: ReactN
 
   useEffect(() => {
     const isDev = process.env.NODE_ENV !== "production";
-    if (!raw && !isDev) {
+    const isPreview = process.env.NEXT_PUBLIC_PREVIEW_MODE === "true";
+    if (!raw && !isDev && !isPreview) {
       setStatus("no-telegram");
       return;
     }

@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getModuleById } from "@/config/modules";
+import { isPreviewMode } from "@/lib/preview";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+
+  if (isPreviewMode() && id.startsWith("preview-")) {
+    const module = getModuleById(id.replace("preview-", ""));
+    return NextResponse.json({
+      module: module ? { id: module.id, title: module.title, uiAccent: module.ui_accent } : null,
+      messages: [],
+    });
+  }
+
   const supabase = createServiceClient();
 
   const { data: conversation } = await supabase
