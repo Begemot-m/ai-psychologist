@@ -32,8 +32,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "conversation not found" }, { status: 404 });
   }
 
-  const module = getModuleById(conversation.module_id);
-  if (!module) {
+  const selectedModule = getModuleById(conversation.module_id);
+  if (!selectedModule) {
     return NextResponse.json({ error: "module not found" }, { status: 404 });
   }
 
@@ -88,13 +88,13 @@ export async function POST(req: NextRequest) {
   }
 
   const recentWindow = messages.slice(summarizedThrough);
-  const knowledge = await retrieveContext(content, module.kb_namespace);
+  const knowledge = await retrieveContext(content, selectedModule.kb_namespace);
   const knowledgeBlock = knowledge.length
     ? knowledge.map((chunk, i) => `[${i + 1}] ${chunk.content}`).join("\n\n")
     : "Подходящих материалов из базы знаний не найдено — отвечай на основе системного промпта.";
 
   const systemBlocks: Array<{ type: "text"; text: string; cache_control?: { type: "ephemeral" } }> = [
-    { type: "text", text: module.system_prompt, cache_control: { type: "ephemeral" } },
+    { type: "text", text: selectedModule.system_prompt, cache_control: { type: "ephemeral" } },
     { type: "text", text: `Материалы из базы знаний:\n${knowledgeBlock}`, cache_control: { type: "ephemeral" } },
   ];
   if (summary) {

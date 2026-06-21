@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { activeModules, comingSoonModules } from "@/config/modules";
 import { useAuthUser } from "../telegram-provider";
 
-export default function MarketplacePage() {
+function MarketplaceContent() {
   const router = useRouter();
   const user = useAuthUser();
   const searchParams = useSearchParams();
@@ -80,5 +80,13 @@ export default function MarketplacePage() {
         ))}
       </div>
     </main>
+  );
+}
+
+export default function MarketplacePage() {
+  return (
+    <Suspense fallback={<main className="flex min-h-screen items-center justify-center">Загрузка...</main>}>
+      <MarketplaceContent />
+    </Suspense>
   );
 }

@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Unbounded } from "next/font/google";
 import "./globals.css";
-import { TelegramProvider } from "./telegram-provider";
 
 const inter = Inter({
-  variable: "--font-sans",
+  variable: "--font-inter",
   subsets: ["latin", "cyrillic"],
 });
 
+const unbounded = Unbounded({
+  variable: "--font-display",
+  subsets: ["latin", "cyrillic"],
+  weight: ["600", "700", "800", "900"],
+});
+
 export const metadata: Metadata = {
-  title: "AI-психолог",
-  description: "Бережное психологическое сопровождение в Telegram",
+  title: "AI-психолог — интерактивный прототип",
+  description: "Кликабельный Telegram Mini App прототип психологического ИИ-сопровождения.",
 };
 
 export default function RootLayout({
@@ -19,10 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
-        <TelegramProvider>{children}</TelegramProvider>
-      </body>
+    <html lang="ru" className={`${inter.variable} ${unbounded.variable} h-full antialiased`}>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

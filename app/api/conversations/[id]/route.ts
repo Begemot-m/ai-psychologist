@@ -19,7 +19,7 @@ export async function GET(
     return NextResponse.json({ error: "conversation not found" }, { status: 404 });
   }
 
-  const module = getModuleById(conversation.module_id ?? "");
+  const selectedModule = getModuleById(conversation.module_id ?? "");
 
   const { data: messages } = await supabase
     .from("messages")
@@ -28,8 +28,8 @@ export async function GET(
     .order("created_at", { ascending: true });
 
   return NextResponse.json({
-    module: module
-      ? { id: module.id, title: module.title, uiAccent: module.ui_accent }
+    module: selectedModule
+      ? { id: selectedModule.id, title: selectedModule.title, uiAccent: selectedModule.ui_accent }
       : null,
     messages: messages ?? [],
   });

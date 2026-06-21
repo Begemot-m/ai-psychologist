@@ -22,34 +22,27 @@ export function useAuthUser() {
 }
 
 export function TelegramProvider({ children }: { children: ReactNode }) {
-  const [raw, setRaw] = useState<string | undefined>(undefined);
-  const [initialized, setInitialized] = useState(false);
-
-  useEffect(() => {
+  const [raw] = useState<string | undefined>(() => {
     try {
       init();
-      setRaw(retrieveRawInitData());
+      return retrieveRawInitData();
     } catch {
       // не внутри Telegram (например, локальная разработка в браузере)
-      setRaw(undefined);
+      return undefined;
     }
-    setInitialized(true);
-  }, []);
+  });
 
-  if (!initialized) return null;
   return <AuthGate raw={raw}>{children}</AuthGate>;
 }
 
 function AuthGate({ raw, children }: { raw: string | undefined; children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [status, setStatus] = useState<"loading" | "ready" | "no-telegram" | "auth-failed">("loading");
+  const [status, setStatus] = useState<"loading" | "ready" | "no-telegram" | "auth-failed">(() =>
+    !raw && process.env.NODE_ENV === "production" ? "no-telegram" : "loading",
+  );
 
   useEffect(() => {
-    const isDev = process.env.NODE_ENV !== "production";
-    if (!raw && !isDev) {
-      setStatus("no-telegram");
-      return;
-    }
+    if (status === "no-telegram") return;
     fetch("/api/auth", {
       method: "POST",
       headers: raw ? { Authorization: `tma ${raw}` } : { "x-dev-bypass": "true" },
@@ -63,7 +56,7 @@ function AuthGate({ raw, children }: { raw: string | undefined; children: ReactN
         setStatus("ready");
       })
       .catch(() => setStatus("auth-failed"));
-  }, [raw]);
+  }, [raw, status]);
 
   if (status === "loading") {
     return <div className="flex min-h-screen items-center justify-center">Загрузка…</div>;

@@ -1,48 +1,76 @@
 @import "tailwindcss";
+@source "./page.tsx";
+@source "./layout.tsx";
 
 :root {
-  /* Палитра — референс "Reflect Notes" (styles.refero.design), starlit violet cosmos */
-  --background: #030014;
-  --surface: #060317;
-  --surface-raised: #10093a;
-  --surface-border: rgba(255, 255, 255, 0.08);
-  --foreground: #f4f0ff;
-  --muted: #a8a6b7;
-  --muted-2: #918ea0;
-  --accent: #9382ff;
-  --accent-strong: #5046e4;
-  --gradient-text: linear-gradient(90.01deg, #e59cff 0.01%, #ba9cff 50.01%, #9cb2ff 100%);
+  --page: #e9e4f7;
+  --app: #fafaf8;
+  --ink: #111111;
+  --muted: rgba(17, 17, 17, 0.58);
+  --card: #f2f2ef;
+  --lavender: #b8a9ff;
+  --lavender-soft: rgba(184, 169, 255, 0.24);
+  --lavender-deep: #7a67e0;
+  --pink: #ff9fb2;
+  --pink-soft: rgba(255, 159, 178, 0.22);
+  --pink-deep: #ff6e8a;
+  --green: #7bc47f;
+  --green-soft: rgba(123, 196, 127, 0.2);
+  --green-deep: #3c9c43;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --color-background: var(--app);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-inter);
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
-  background: var(--background);
-  background-image: radial-gradient(rgba(255, 255, 255, 0.5) 0.5px, transparent 0.5px);
-  background-size: 28px 28px;
-  color: var(--foreground);
-  font-family: var(--font-sans), Inter, Arial, Helvetica, sans-serif;
-  letter-spacing: -0.01em;
+  margin: 0;
+  min-height: 100%;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-inter), Inter, Arial, Helvetica, sans-serif;
+  letter-spacing: 0;
 }
 
-h1, h2, h3 {
-  font-weight: 500;
-  letter-spacing: -0.02em;
+button,
+input {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.glass-card {
-  background: var(--surface);
-  border: 1px solid var(--surface-border);
-  box-shadow: inset 0 0 24px rgba(255, 255, 255, 0.04);
+button {
+  cursor: pointer;
 }
 
-.gradient-text {
-  background-image: var(--gradient-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), var(--font-inter), sans-serif;
+}
+
+::selection {
+  background: var(--lavender);
+  color: var(--ink);
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
