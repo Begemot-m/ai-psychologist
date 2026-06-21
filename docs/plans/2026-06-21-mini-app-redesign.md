@@ -32,3 +32,13 @@ The second pass focuses on the "better and safer than a generic GPT chat" feelin
 4. Chat uses a Siri-like animated voice orb and a live thinking panel instead of a human avatar, with compact layout that fits the mobile viewport.
 5. Programs start with a meditation timer card, animated progress, and expanded program plans with concrete steps and infographic-like metadata.
 6. Micro-haptics are attached to taps where supported, while Framer Motion handles smooth tap, entrance, and state animations.
+
+## Premium Voice Chat Iteration
+
+The third pass removes the generic SaaS feeling from the core chat:
+
+1. Typography moves to Playfair Display for editorial headings and Manrope for the interface. GitHub Pages uses a CSS font import fallback so the static build keeps the same identity.
+2. Chat no longer exposes quick action chips or expanded action menus. The primary interaction is a natural text input with one send action.
+3. The chat header is now a large Siri-like voice stage with layered morphing color fields, pulse bars, and distinct idle/thinking states.
+4. The visual language is softer and more premium: warm off-white app background, glass panels, rose/lavender/sun light washes, lighter weights, and no negative letter spacing.
+5. Figma now contains a visible "Premium Voice Chat" wrapper with idle, thinking, and motion-spec frames using the same Playfair + Manrope typography.

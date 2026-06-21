@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -288,15 +288,6 @@ const methods: MethodOption[] = [
   },
 ];
 
-const quickPrompts = ["Мне тревожно", "Разложи по шагам", "Дай технику", "Что со мной?"];
-
-const thinkingLines = [
-  "сверяю тон с твоим состоянием",
-  "отделяю поддержку от советов",
-  "подбираю технику самопомощи",
-  "формулирую бережный следующий шаг",
-];
-
 const scriptedReplies = [
   "Я не буду спорить с твоей тревогой или уговаривать тебя «просто успокоиться». Давай сначала снизим громкость состояния: поставь обе стопы на пол и найди глазами три спокойных объекта рядом.",
   "Теперь коротко: что тревога пытается предотвратить? Часто она звучит как защита, но выбирает слишком жёсткий способ. Мы можем поблагодарить её за сигнал и всё равно не отдавать ей руль.",
@@ -442,9 +433,10 @@ function AppButton({
 function ScreenShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[var(--page)] text-[var(--ink)] sm:flex sm:items-center sm:justify-center sm:p-6">
-      <div className="relative mx-auto flex h-[100svh] w-full max-w-[430px] overflow-hidden bg-[var(--app)] shadow-2xl sm:h-[calc(100svh-48px)] sm:max-h-[844px] sm:rounded-[42px] sm:border sm:border-black/10">
-        <div className="pointer-events-none absolute -right-20 top-12 h-48 w-48 rounded-full bg-[var(--lavender)]/24 blur-3xl" />
-        <div className="pointer-events-none absolute -left-24 top-72 h-44 w-44 rounded-full bg-[var(--pink)]/18 blur-3xl" />
+      <div className="luxury-grain relative mx-auto flex h-[100svh] w-full max-w-[430px] overflow-hidden bg-[var(--app)] shadow-[0_30px_100px_rgba(54,35,72,0.22)] sm:h-[calc(100svh-48px)] sm:max-h-[844px] sm:rounded-[46px] sm:border sm:border-white/55">
+        <div className="pointer-events-none absolute -right-20 top-12 h-52 w-52 rounded-full bg-[var(--lavender)]/30 blur-3xl" />
+        <div className="pointer-events-none absolute -left-24 top-72 h-48 w-48 rounded-full bg-[var(--pink)]/22 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-8 right-10 h-44 w-44 rounded-full bg-[var(--sun)]/18 blur-3xl" />
         <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-14 bg-gradient-to-b from-[var(--app)]/90 to-transparent" />
         <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
       </div>
@@ -482,35 +474,70 @@ function MotionGlyph({ icon: Icon, tone, active = false }: { icon: LucideIcon; t
 }
 
 function VoiceOrb({ thinking = false, small = false }: { thinking?: boolean; small?: boolean }) {
-  const size = small ? "h-20 w-20" : "h-28 w-28";
+  const size = small ? "h-20 w-20" : "h-[120px] w-[120px]";
   return (
-    <div className={cx("relative flex items-center justify-center", size)}>
-      {[0, 1, 2].map((ring) => (
+    <div className={cx("siri-glow relative flex items-center justify-center", size)}>
+      {[0, 1, 2, 3].map((ring) => (
         <motion.span
           key={ring}
           animate={{
-            scale: thinking ? [0.78, 1.12 + ring * 0.08, 0.82] : [0.9, 1.02 + ring * 0.03, 0.9],
-            opacity: thinking ? [0.55, 0.22, 0.48] : [0.32, 0.16, 0.32],
-            rotate: [0, ring % 2 ? -18 : 18, 0],
+            borderRadius: ["42% 58% 56% 44%", "58% 42% 45% 55%", "48% 52% 62% 38%", "42% 58% 56% 44%"],
+            scale: thinking ? [0.74, 1.18 + ring * 0.05, 0.82] : [0.86, 1.02 + ring * 0.03, 0.88],
+            opacity: thinking ? [0.72, 0.28, 0.58] : [0.42, 0.2, 0.36],
+            rotate: [0, ring % 2 ? -28 : 28, 0],
           }}
-          transition={{ duration: thinking ? 1.8 + ring * 0.22 : 4.5 + ring, repeat: Infinity, ease: "easeInOut" }}
+          transition={{ duration: thinking ? 1.45 + ring * 0.2 : 4.8 + ring * 0.7, repeat: Infinity, ease: "easeInOut" }}
           className={cx(
-            "absolute rounded-[36%] blur-[1px]",
+            "absolute blur-[1px]",
             size,
             ring === 0 && "bg-[var(--lavender)]",
             ring === 1 && "bg-[var(--pink)]",
             ring === 2 && "bg-[var(--green)]",
+            ring === 3 && "bg-[var(--sun)]",
           )}
         />
       ))}
       <motion.span
-        animate={{ scale: thinking ? [1, 0.92, 1.05, 1] : [1, 1.04, 1] }}
-        transition={{ duration: thinking ? 1.15 : 3.2, repeat: Infinity }}
+        animate={{
+          borderRadius: ["35% 65% 56% 44%", "58% 42% 38% 62%", "45% 55% 64% 36%", "35% 65% 56% 44%"],
+          scale: thinking ? [1, 0.92, 1.06, 0.98, 1] : [1, 1.035, 1],
+        }}
+        transition={{ duration: thinking ? 1.05 : 3.6, repeat: Infinity, ease: "easeInOut" }}
         className={cx(
-          "relative rounded-[32%] bg-white/85 shadow-[0_22px_70px_rgba(122,103,224,0.18)]",
-          small ? "h-11 w-11" : "h-16 w-16",
+          "relative bg-white/78 shadow-[inset_0_1px_12px_rgba(255,255,255,0.9),0_26px_80px_rgba(122,83,166,0.24)] backdrop-blur",
+          small ? "h-11 w-11" : "h-[72px] w-[72px]",
         )}
       />
+    </div>
+  );
+}
+
+function VoiceBars({ thinking }: { thinking: boolean }) {
+  return (
+    <div className="flex h-6 items-center justify-center gap-1.5">
+      {[0, 1, 2, 3, 4, 5, 6].map((bar) => (
+        <motion.span
+          key={bar}
+          animate={{ height: thinking ? [8, 26 - Math.abs(3 - bar) * 3, 10] : [8, 13 + (bar % 3) * 2, 8], opacity: thinking ? [0.48, 1, 0.58] : [0.3, 0.6, 0.3] }}
+          transition={{ duration: thinking ? 0.82 : 2.4, repeat: Infinity, delay: bar * 0.06, ease: "easeInOut" }}
+          className="w-1.5 rounded-full bg-gradient-to-b from-[var(--pink)] via-[var(--lavender)] to-[var(--green)]"
+        />
+      ))}
+    </div>
+  );
+}
+
+function VoiceStage({ thinking, title, subtitle }: { thinking: boolean; title: string; subtitle: string }) {
+  return (
+    <div className="relative overflow-hidden rounded-[34px] border border-white/70 bg-white/50 px-4 pb-4 pt-4 shadow-[0_24px_68px_var(--soft-shadow)] backdrop-blur-2xl">
+      <div className="absolute -left-10 top-8 h-32 w-32 rounded-full bg-[var(--pink)]/24 blur-3xl" />
+      <div className="absolute -right-10 bottom-2 h-36 w-36 rounded-full bg-[var(--lavender)]/34 blur-3xl" />
+      <div className="relative flex flex-col items-center text-center">
+        <VoiceOrb thinking={thinking} />
+        <VoiceBars thinking={thinking} />
+        <p className="font-display text-[27px] leading-[1.02]">{title}</p>
+        <p className="mt-1.5 max-w-[285px] text-[11px] font-semibold leading-relaxed text-[var(--muted)]">{subtitle}</p>
+      </div>
     </div>
   );
 }
@@ -552,10 +579,10 @@ function OnboardingScreen({ onDone }: { onDone: () => void }) {
             <div className="mb-8">
               {step === 0 ? <VoiceOrb /> : <MotionGlyph icon={Icon} tone={step === 1 ? "green" : step === 2 ? "pink" : "lavender"} active />}
             </div>
-            <p className="mb-3 rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-[var(--lavender-deep)] shadow-sm">
+            <p className="mb-3 rounded-full bg-white px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--lavender-deep)] shadow-sm">
               не ChatGPT в другой обложке
             </p>
-            <h1 className="max-w-[340px] text-[31px] font-black leading-[1.02] tracking-[-0.035em]">{item.title}</h1>
+            <h1 className="max-w-[340px] text-[31px] font-extrabold leading-[1.02]">{item.title}</h1>
             <p className="mt-5 max-w-[330px] text-[15px] leading-relaxed text-[var(--muted)]">{item.text}</p>
           </motion.div>
         </AnimatePresence>
@@ -608,8 +635,8 @@ function IntakeScreen({
         <div className="h-2 overflow-hidden rounded-full bg-black/5">
           <motion.div className="h-full rounded-full bg-[var(--ink)]" animate={{ width: `${progress}%` }} />
         </div>
-        <p className="mt-4 text-xs font-black uppercase tracking-[0.14em] text-[var(--lavender-deep)]">{question.eyebrow}</p>
-        <h1 className="mt-2 text-[29px] font-black leading-[1.04] tracking-[-0.035em]">{question.title}</h1>
+        <p className="mt-4 text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--lavender-deep)]">{question.eyebrow}</p>
+        <h1 className="mt-2 text-[29px] font-extrabold leading-[1.04]">{question.title}</h1>
         <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">{question.subtitle}</p>
       </div>
       <div className="mt-5 min-h-0 flex-1 space-y-3 overflow-y-auto pb-2">
@@ -639,7 +666,7 @@ function IntakeScreen({
                   <Icon size={22} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[16px] font-black tracking-[-0.02em]">{option.label}</span>
+                  <span className="block text-[16px] font-extrabold">{option.label}</span>
                   <span className="mt-1 block text-[13px] leading-relaxed text-[var(--muted)]">{option.detail}</span>
                 </span>
                 {active && <BadgeCheck className="mt-1 text-[var(--green-deep)]" size={20} />}
@@ -673,8 +700,8 @@ function ModuleScreen({ onSelect, answers }: { onSelect: (module: ModuleOption) 
     <div className="flex h-full min-w-0 flex-col px-5 pb-5">
       <TopBar label="конструктор" />
       <div className="mt-4">
-        <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--lavender-deep)]">персональная сборка</p>
-        <h1 className="mt-2 text-[30px] font-black leading-[1.02] tracking-[-0.035em]">Выбери фокус работы</h1>
+        <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--lavender-deep)]">персональная сборка</p>
+        <h1 className="mt-2 text-[30px] font-extrabold leading-[1.02]">Выбери фокус работы</h1>
         <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
           Мы уже учли ответы анкеты. Можно взять рекомендацию или пролистать другие направления.
         </p>
@@ -700,7 +727,7 @@ function ModuleScreen({ onSelect, answers }: { onSelect: (module: ModuleOption) 
               <span className={cx("mb-4 flex h-12 w-12 items-center justify-center rounded-2xl", toneClasses(module.tone))}>
                 <Icon size={22} />
               </span>
-              <span className="block text-[15px] font-black leading-tight">{module.title}</span>
+              <span className="block text-[15px] font-extrabold leading-tight">{module.title}</span>
               <span className="mt-1 block text-[11px] text-[var(--muted)]">{module.caption}</span>
             </motion.button>
           );
@@ -715,7 +742,7 @@ function ModuleScreen({ onSelect, answers }: { onSelect: (module: ModuleOption) 
         <div className="flex items-start gap-4">
           <MotionGlyph icon={ActiveIcon} tone={active.tone} active />
           <div className="min-w-0">
-            <p className="text-xl font-black tracking-[-0.03em]">{active.title}</p>
+            <p className="text-xl font-extrabold">{active.title}</p>
             <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{active.description}</p>
           </div>
         </div>
@@ -773,11 +800,11 @@ function MethodScreen({
         >
           Назад
         </button>
-        <span className="rounded-full bg-[var(--green-soft)] px-3 py-1 text-[11px] font-black text-[var(--green-deep)]">
+        <span className="rounded-full bg-[var(--green-soft)] px-3 py-1 text-[11px] font-extrabold text-[var(--green-deep)]">
           всё открыто
         </span>
       </div>
-      <h1 className="mt-4 text-[30px] font-black leading-none tracking-[-0.035em]">Как будем работать?</h1>
+      <h1 className="mt-4 text-[30px] font-extrabold leading-none">Как будем работать?</h1>
       <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
         Не просто список школ: каждый подход меняет вопросы, тон и тип упражнений.
       </p>
@@ -802,7 +829,7 @@ function MethodScreen({
               <span className={cx("mb-4 flex h-12 w-12 items-center justify-center rounded-2xl", toneClasses(method.tone))}>
                 <Icon size={22} />
               </span>
-              <span className="block text-[17px] font-black tracking-[-0.02em]">{method.title}</span>
+              <span className="block text-[17px] font-extrabold">{method.title}</span>
               <span className="mt-1 block text-xs leading-relaxed text-[var(--muted)]">{method.caption}</span>
             </motion.button>
           );
@@ -817,7 +844,7 @@ function MethodScreen({
         <div className="flex items-start gap-4">
           <MotionGlyph icon={ActiveIcon} tone={active.tone} active />
           <div>
-            <p className="text-xl font-black tracking-[-0.03em]">{active.title}</p>
+            <p className="text-xl font-extrabold">{active.title}</p>
             <p className="mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[var(--lavender-deep)]">
               лучше всего: {active.bestFor}
             </p>
@@ -827,13 +854,13 @@ function MethodScreen({
         <div className="mt-5 grid grid-cols-2 gap-2">
           {active.flow.map((step, index) => (
             <div key={step} className="rounded-[18px] bg-[var(--app)] p-3">
-              <span className="text-[11px] font-black text-black/35">0{index + 1}</span>
+              <span className="text-[11px] font-extrabold text-black/35">0{index + 1}</span>
               <p className="mt-1 text-xs font-bold leading-snug">{step}</p>
             </div>
           ))}
         </div>
         <div className="mt-5 rounded-[22px] bg-[var(--lavender-soft)] p-4">
-          <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--lavender-deep)]">первый вопрос</p>
+          <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-[var(--lavender-deep)]">первый вопрос</p>
           <p className="mt-2 text-sm font-bold leading-relaxed">{active.question}</p>
         </div>
       </motion.div>
@@ -845,65 +872,19 @@ function MethodScreen({
   );
 }
 
-function ThinkingPanel({ thinking }: { thinking: boolean }) {
-  return (
-    <motion.div
-      animate={{ opacity: thinking ? 1 : 0.84 }}
-      className="rounded-[30px] bg-white/84 p-4 shadow-[0_18px_42px_rgba(17,17,17,0.07)]"
-    >
-      <div className="flex items-center gap-4">
-        <VoiceOrb thinking={thinking} small />
-        <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-black tracking-[-0.02em]">{thinking ? "Ассистент думает" : "Готов к диалогу"}</p>
-          <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-            {thinking ? "анализирует состояние, не торопится с советом" : "сначала поддержка, потом техника"}
-          </p>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-black/5">
-            <motion.div
-              animate={{ x: thinking ? ["-20%", "120%"] : "0%" }}
-              transition={{ duration: 1.4, repeat: thinking ? Infinity : 0, ease: "easeInOut" }}
-              className="h-full w-1/2 rounded-full bg-gradient-to-r from-[var(--lavender)] via-[var(--pink)] to-[var(--green)]"
-            />
-          </div>
-        </div>
-      </div>
-      <AnimatePresence>
-        {thinking && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {thinkingLines.map((line, index) => (
-                <motion.div
-                  key={line}
-                  animate={{ opacity: [0.35, 1, 0.35] }}
-                  transition={{ duration: 1.4, repeat: Infinity, delay: index * 0.18 }}
-                  className="rounded-full bg-[var(--app)] px-3 py-2 text-[11px] font-bold text-black/55"
-                >
-                  {line}
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-function ChatScreen({
+function PremiumChatScreen({
   module,
   method,
-  onPremium,
   onReset,
 }: {
   module: ModuleOption;
   method: MethodOption;
-  onPremium: () => void;
   onReset: () => void;
 }) {
   const [messages, setMessages] = useState<Message[]>([
     makeMessage(
       "assistant",
-      `Я рядом. Судя по настройке, фокус — «${module.title}», подход — «${method.title}». Начнём не с советов, а с понимания: что сейчас самое тяжёлое?`,
+      `Я рядом. Сценарий уже настроен: «${module.title}» и подход «${method.title}». Начнём не с советов, а с понимания: что сейчас самое тяжёлое?`,
     ),
   ]);
   const [input, setInput] = useState("");
@@ -927,91 +908,89 @@ function ChatScreen({
       setReplyIndex((value) => value + 1);
       setThinking(false);
       haptic("medium");
-    }, 1500);
+    }, 1650);
   }
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col">
-      <header className="shrink-0 border-b border-black/5 bg-[var(--app)]/90 px-4 pb-3 pt-3 backdrop-blur">
-        <div className="mb-3 flex items-center justify-between">
+    <div className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--app)]">
+      <div className="pointer-events-none absolute -left-28 top-8 h-72 w-72 rounded-full bg-[var(--pink)]/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-28 top-44 h-80 w-80 rounded-full bg-[var(--lavender)]/28 blur-3xl" />
+      <header className="relative z-10 shrink-0 px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))]">
+        <div className="flex items-center justify-between">
           <div className="min-w-0">
-            <p className="truncate text-[16px] font-black tracking-[-0.025em]">
-              {module.title} · {method.title}
-            </p>
-            <p className="text-[11px] font-bold text-[var(--green-deep)]">персональный сценарий · free</p>
+            <p className="font-display truncate text-[22px] leading-none">{module.title}</p>
+            <p className="mt-1 text-[11px] font-bold uppercase text-black/45">{method.title} · free</p>
           </div>
-          <button
+          <motion.button
             type="button"
+            whileTap={{ scale: 0.92 }}
             onClick={() => {
               haptic("light");
               onReset();
             }}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/58 shadow-[0_14px_34px_rgba(44,26,18,0.08)] backdrop-blur"
             aria-label="Сбросить выбор"
           >
-            <RotateCcw size={16} />
-          </button>
+            <RotateCcw size={17} />
+          </motion.button>
         </div>
-        <ThinkingPanel thinking={thinking} />
       </header>
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
-        {messages.map((message) => (
-          <motion.div
-            key={message.id}
-            initial={{ opacity: 0, y: 10, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            className={cx("flex", message.role === "user" ? "justify-end" : "justify-start")}
-          >
-            <div
-              className={cx(
-                "max-w-[84%] rounded-[24px] px-4 py-3 text-[13.5px] leading-relaxed shadow-sm",
-                message.role === "user"
-                  ? "bg-[var(--ink)] text-white"
-                  : "bg-white text-[var(--ink)]",
-              )}
-            >
-              {message.text}
-            </div>
-          </motion.div>
-        ))}
-        {messages.length > 5 && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-[24px] bg-[var(--pink-soft)] p-4">
-            <p className="text-sm font-black">Premium пока только демонстрация</p>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">Путь не блокируется. Можно посмотреть экран монетизации и вернуться.</p>
-            <AppButton variant="soft" onClick={onPremium} className="mt-3 w-full">
-              Посмотреть Premium
-            </AppButton>
-          </motion.div>
-        )}
-        <div ref={bottomRef} />
+
+      <div className="relative z-10 shrink-0 px-4">
+        <VoiceStage
+          thinking={thinking}
+          title={thinking ? "Слушаю глубже" : "Можно писать"}
+          subtitle={thinking ? "Сверяю тон, отделяю поддержку от советов и подбираю один бережный следующий шаг." : "Без меню действий. Просто опиши состояние своими словами, а я отвечу как психологический ассистент."}
+        />
       </div>
-      <div className="shrink-0 border-t border-black/5 bg-white/90 px-4 pb-[max(10px,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-        <div className="mb-2 flex min-w-0 gap-2 overflow-x-auto pb-1">
-          {quickPrompts.map((prompt) => (
-            <motion.button
-              key={prompt}
-              type="button"
-              whileTap={{ scale: 0.96 }}
-              onClick={() => send(prompt)}
-              className="shrink-0 rounded-full bg-[var(--card)] px-3.5 py-2 text-[11px] font-bold"
+
+      <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-4">
+        <div className="space-y-3">
+          {messages.map((message) => (
+            <motion.div
+              key={message.id}
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.28, ease: "easeOut" }}
+              className={cx("flex", message.role === "user" ? "justify-end" : "justify-start")}
             >
-              {prompt}
-            </motion.button>
+              <div
+                className={cx(
+                  "max-w-[86%] rounded-[28px] px-4 py-3 text-[14px] leading-relaxed shadow-[0_16px_36px_rgba(44,26,18,0.07)]",
+                  message.role === "user"
+                    ? "rounded-br-[10px] bg-[var(--ink)] text-white"
+                    : "rounded-bl-[10px] border border-white/72 bg-white/72 text-[var(--ink)] backdrop-blur",
+                )}
+              >
+                {message.text}
+              </div>
+            </motion.div>
           ))}
+          {thinking && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start">
+              <div className="rounded-[24px] rounded-bl-[10px] border border-white/70 bg-white/55 px-4 py-3 shadow-[0_16px_36px_rgba(44,26,18,0.06)] backdrop-blur">
+                <VoiceBars thinking />
+              </div>
+            </motion.div>
+          )}
+          <div ref={bottomRef} />
         </div>
-        <div className="flex items-center gap-2">
+      </div>
+
+      <div className="relative z-10 shrink-0 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-2">
+        <div className="flex items-center gap-2 rounded-full border border-white/70 bg-white/68 p-2 shadow-[0_18px_52px_rgba(44,26,18,0.1)] backdrop-blur-2xl">
           <input
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => event.key === "Enter" && send(input)}
-            placeholder="Напиши коротко..."
-            className="h-11 min-w-0 flex-1 rounded-full bg-[var(--card)] px-4 text-sm outline-none placeholder:text-black/35"
+            placeholder="Напиши, что происходит..."
+            className="h-11 min-w-0 flex-1 bg-transparent px-3 text-[15px] font-semibold outline-none placeholder:text-black/36"
           />
           <motion.button
             type="button"
             whileTap={{ scale: 0.9 }}
             onClick={() => send(input)}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] text-white"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] text-white shadow-[0_14px_34px_rgba(23,17,17,0.22)]"
             aria-label="Отправить"
           >
             <Send size={17} />
@@ -1060,12 +1039,12 @@ function MeditationTimer() {
             className="absolute inset-1 rounded-full"
             style={{ background: `conic-gradient(var(--lavender) ${progress}%, rgba(255,255,255,.16) ${progress}%)` }}
           />
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[var(--ink)] text-lg font-black">
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[var(--ink)] text-lg font-extrabold">
             {minutes}:{rest}
           </div>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xl font-black tracking-[-0.03em]">3 минуты тишины</p>
+          <p className="text-xl font-extrabold">3 минуты тишины</p>
           <p className="mt-2 text-xs leading-relaxed text-white/68">
             Дыхание 4-6, мягкий фокус на теле, без требования «успокоиться идеально».
           </p>
@@ -1075,7 +1054,7 @@ function MeditationTimer() {
               haptic("medium");
               setRunning((value) => !value);
             }}
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-black text-[var(--ink)]"
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-extrabold text-[var(--ink)]"
           >
             {running ? <Pause size={14} /> : <Play size={14} />}
             {running ? "Пауза" : "Начать"}
@@ -1092,7 +1071,7 @@ function ProgramsScreen({ onPremium }: { onPremium: () => void }) {
   return (
     <div className="relative h-full min-w-0 overflow-hidden">
       <div className="flex h-full min-w-0 flex-col px-5 pb-5 pt-4">
-        <h1 className="text-[30px] font-black leading-none tracking-[-0.035em]">Практики</h1>
+        <h1 className="text-[30px] font-extrabold leading-none">Практики</h1>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
           Не библиотека карточек, а конкретные сценарии: что делать, сколько времени и зачем.
         </p>
@@ -1120,14 +1099,14 @@ function ProgramsScreen({ onPremium }: { onPremium: () => void }) {
                       <Icon size={22} />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[16px] font-black tracking-[-0.02em]">{program.title}</span>
+                      <span className="block text-[16px] font-extrabold">{program.title}</span>
                       <span className="mt-1 block text-xs text-[var(--muted)]">{program.caption}</span>
                     </span>
                     <ChevronRight className="text-black/25" size={18} />
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-2">
                     {program.stats.map((stat) => (
-                      <div key={stat} className="rounded-[16px] bg-[var(--app)] px-2 py-2 text-center text-[10px] font-black text-black/55">
+                      <div key={stat} className="rounded-[16px] bg-[var(--app)] px-2 py-2 text-center text-[10px] font-extrabold text-black/55">
                         {stat}
                       </div>
                     ))}
@@ -1136,7 +1115,7 @@ function ProgramsScreen({ onPremium }: { onPremium: () => void }) {
                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--card)]">
                       <motion.div initial={{ width: 0 }} animate={{ width: `${program.progress}%` }} className="h-full rounded-full bg-[var(--lavender-deep)]" />
                     </div>
-                    <span className="text-xs font-black text-black/45">{program.progress}%</span>
+                    <span className="text-xs font-extrabold text-black/45">{program.progress}%</span>
                   </div>
                 </motion.button>
               );
@@ -1163,13 +1142,13 @@ function ProgramsScreen({ onPremium }: { onPremium: () => void }) {
             >
               Назад
             </button>
-            <h2 className="text-[29px] font-black leading-none tracking-[-0.035em]">{opened.title}</h2>
+            <h2 className="text-[29px] font-extrabold leading-none">{opened.title}</h2>
             <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">{opened.goal}</p>
             <div className="mt-5 grid grid-cols-3 gap-2">
               {opened.stats.map((stat) => (
                 <div key={stat} className="rounded-[18px] bg-white p-3 text-center">
                   <BarChart3 className="mx-auto mb-2 text-[var(--lavender-deep)]" size={16} />
-                  <p className="text-[10px] font-black text-black/55">{stat}</p>
+                  <p className="text-[10px] font-extrabold text-black/55">{stat}</p>
                 </div>
               ))}
             </div>
@@ -1177,11 +1156,11 @@ function ProgramsScreen({ onPremium }: { onPremium: () => void }) {
               {opened.days.map((day, index) => (
                 <div key={day.title} className="rounded-[24px] bg-white p-4 shadow-sm">
                   <div className="flex items-start gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--green-soft)] text-xs font-black text-[var(--green-deep)]">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--green-soft)] text-xs font-extrabold text-[var(--green-deep)]">
                       {index + 1}
                     </span>
                     <div>
-                      <p className="text-sm font-black">{day.title}</p>
+                      <p className="text-sm font-extrabold">{day.title}</p>
                       <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">{day.detail}</p>
                     </div>
                   </div>
@@ -1215,7 +1194,7 @@ function PremiumScreen({ onClose }: { onClose: () => void }) {
       </button>
       <div className="mt-5 text-center">
         <VoiceOrb />
-        <h1 className="mt-6 text-[34px] font-black leading-none tracking-[-0.035em]">Premium</h1>
+        <h1 className="mt-6 text-[34px] font-extrabold leading-none">Premium</h1>
         <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">Демо-монетизация. Все форматы уже открыты, оплата не выполняется.</p>
       </div>
       <div className="mt-6 space-y-2">
@@ -1228,12 +1207,12 @@ function PremiumScreen({ onClose }: { onClose: () => void }) {
       </div>
       <div className="mt-6 grid grid-cols-2 gap-3">
         <button type="button" className="rounded-[24px] bg-white p-4 text-left">
-          <span className="block text-sm font-black">Месяц</span>
+          <span className="block text-sm font-extrabold">Месяц</span>
           <span className="mt-1 block text-xs text-[var(--muted)]">499 руб.</span>
         </button>
         <button type="button" className="relative rounded-[24px] bg-[var(--lavender-soft)] p-4 text-left">
-          <span className="absolute -top-2 right-4 rounded-full bg-[var(--pink)] px-2 py-1 text-[10px] font-black text-white">выгодно</span>
-          <span className="block text-sm font-black">Год</span>
+          <span className="absolute -top-2 right-4 rounded-full bg-[var(--pink)] px-2 py-1 text-[10px] font-extrabold text-white">выгодно</span>
+          <span className="block text-sm font-extrabold">Год</span>
           <span className="mt-1 block text-xs text-[var(--muted)]">3 990 руб.</span>
         </button>
       </div>
@@ -1247,7 +1226,7 @@ function PremiumScreen({ onClose }: { onClose: () => void }) {
             <motion.div initial={{ scale: 0.6, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 220, damping: 14 }} className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--green-soft)] text-[var(--green-deep)]">
               <BadgeCheck size={38} />
             </motion.div>
-            <p className="text-xl font-black tracking-[-0.03em]">Готово</p>
+            <p className="text-xl font-extrabold">Готово</p>
             <p className="mt-2 max-w-[260px] text-sm text-[var(--muted)]">Демо прошло успешно, деньги не списывались.</p>
           </motion.div>
         )}
@@ -1259,13 +1238,13 @@ function PremiumScreen({ onClose }: { onClose: () => void }) {
 function ProfileScreen({ onToast }: { onToast: (value: string) => void }) {
   return (
     <div className="flex h-full flex-col overflow-y-auto px-5 pb-28 pt-4">
-      <h1 className="text-[30px] font-black leading-none tracking-[-0.035em]">Профиль</h1>
+      <h1 className="text-[30px] font-extrabold leading-none">Профиль</h1>
       <div className="mt-5 rounded-[28px] bg-white p-4 shadow-[0_12px_30px_rgba(17,17,17,0.055)]">
         <div className="flex items-center gap-4">
           <VoiceOrb small />
           <div>
-            <p className="text-lg font-black tracking-[-0.03em]">Анна</p>
-            <p className="mt-1 w-fit rounded-full bg-[var(--green-soft)] px-3 py-1 text-xs font-black text-[var(--green-deep)]">Demo Free · всё доступно</p>
+            <p className="text-lg font-extrabold">Анна</p>
+            <p className="mt-1 w-fit rounded-full bg-[var(--green-soft)] px-3 py-1 text-xs font-extrabold text-[var(--green-deep)]">Demo Free · всё доступно</p>
           </div>
         </div>
       </div>
@@ -1293,9 +1272,9 @@ function ProfileScreen({ onToast }: { onToast: (value: string) => void }) {
         })}
       </div>
       <div className="mt-5 rounded-[26px] bg-[var(--pink-soft)] p-4">
-        <p className="text-sm font-black">Если тебе плохо прямо сейчас</p>
+        <p className="text-sm font-extrabold">Если тебе плохо прямо сейчас</p>
         <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">Приложение сопровождает, но не заменяет психиатра, психотерапевта или экстренную помощь.</p>
-        <a href="tel:88002000122" className="mt-3 flex items-center gap-2 rounded-full bg-white px-4 py-3 text-xs font-black">
+        <a href="tel:88002000122" className="mt-3 flex items-center gap-2 rounded-full bg-white px-4 py-3 text-xs font-extrabold">
           <ShieldCheck size={16} className="text-[var(--pink-deep)]" />
           8-800-2000-122
         </a>
@@ -1312,8 +1291,8 @@ function BottomTabs({ active, onChange }: { active: Tab; onChange: (tab: Tab) =>
   ];
 
   return (
-    <nav className="shrink-0 border-t border-black/5 bg-white/90 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 backdrop-blur">
-      <div className="grid grid-cols-3 gap-1 rounded-full bg-[var(--card)] p-1">
+    <nav className="shrink-0 bg-transparent px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2">
+      <div className="grid grid-cols-3 gap-1 rounded-full border border-white/70 bg-white/62 p-1 shadow-[0_18px_52px_rgba(44,26,18,0.1)] backdrop-blur-2xl">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const selected = active === tab.id;
@@ -1326,9 +1305,9 @@ function BottomTabs({ active, onChange }: { active: Tab; onChange: (tab: Tab) =>
                 haptic("light");
                 onChange(tab.id);
               }}
-              className={cx("relative flex flex-col items-center gap-1 rounded-full py-2 text-[11px] font-black transition focus:outline-none", selected ? "text-[var(--ink)]" : "text-black/35")}
+              className={cx("relative flex flex-col items-center gap-1 rounded-full py-2 text-[11px] font-extrabold transition focus:outline-none", selected ? "text-[var(--ink)]" : "text-black/35")}
             >
-              {selected && <motion.span layoutId="active-tab" className="absolute inset-0 rounded-full bg-white shadow-[0_8px_20px_rgba(17,17,17,0.08)]" />}
+              {selected && <motion.span layoutId="active-tab" className="absolute inset-0 rounded-full bg-white shadow-[0_8px_20px_rgba(44,26,18,0.08)]" />}
               <Icon className="relative" size={19} />
               <span className="relative">{tab.label}</span>
             </motion.button>
@@ -1364,7 +1343,7 @@ function MainTabs({
       <div className="min-h-0 flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="h-full">
-            {tab === "chat" && <ChatScreen module={module} method={method} onPremium={onPremium} onReset={onReset} />}
+            {tab === "chat" && <PremiumChatScreen module={module} method={method} onReset={onReset} />}
             {tab === "programs" && <ProgramsScreen onPremium={onPremium} />}
             {tab === "profile" && <ProfileScreen onToast={showToast} />}
           </motion.div>
@@ -1459,3 +1438,5 @@ export default function Home() {
     </ScreenShell>
   );
 }
+
+

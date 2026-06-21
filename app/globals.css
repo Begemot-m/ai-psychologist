@@ -1,31 +1,38 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800;900&display=swap");
 @import "tailwindcss";
 @source "./page.tsx";
 @source "./layout.tsx";
 
 :root {
-  --page: #e9e4f7;
-  --app: #fbfaf7;
-  --ink: #151313;
-  --muted: rgba(21, 19, 19, 0.58);
-  --card: #f1f0ea;
-  --lavender: #b8a9ff;
-  --lavender-soft: rgba(184, 169, 255, 0.24);
-  --lavender-deep: #7461df;
-  --pink: #ff9fb2;
-  --pink-soft: rgba(255, 159, 178, 0.2);
-  --pink-deep: #ee6681;
-  --green: #7bc47f;
-  --green-soft: rgba(123, 196, 127, 0.19);
-  --green-deep: #358f3d;
-  --sun: #ffd36e;
-  --sun-soft: rgba(255, 211, 110, 0.24);
+  --page: #ded7ed;
+  --app: #fffaf5;
+  --ink: #171111;
+  --muted: rgba(23, 17, 17, 0.6);
+  --card: #f6eee7;
+  --glass: rgba(255, 255, 255, 0.68);
+  --lavender: #c7b5ff;
+  --lavender-soft: rgba(199, 181, 255, 0.28);
+  --lavender-deep: #6e53d7;
+  --pink: #ff9eba;
+  --pink-soft: rgba(255, 158, 186, 0.22);
+  --pink-deep: #d94e76;
+  --green: #86cfa2;
+  --green-soft: rgba(134, 207, 162, 0.2);
+  --green-deep: #2f8f59;
+  --sun: #ffd98f;
+  --sun-soft: rgba(255, 217, 143, 0.28);
   --sun-deep: #a66f00;
+  --rose-shadow: rgba(174, 80, 106, 0.22);
+  --soft-shadow: rgba(44, 26, 18, 0.1);
+  --font-manrope: "Manrope";
+  --font-playfair: "Playfair Display";
 }
 
 @theme inline {
   --color-background: var(--app);
   --color-foreground: var(--ink);
-  --font-sans: var(--font-onest);
+  --font-sans: var(--font-manrope);
+  --font-serif: var(--font-playfair);
 }
 
 * {
@@ -36,9 +43,12 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background: var(--page);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 214, 143, 0.34), transparent 30%),
+    radial-gradient(circle at 88% 8%, rgba(199, 181, 255, 0.5), transparent 32%),
+    linear-gradient(135deg, #efe8f3 0%, #e7ddea 52%, #dcd4e8 100%);
   color: var(--ink);
-  font-family: var(--font-onest), Arial, Helvetica, sans-serif;
+  font-family: var(--font-manrope), Arial, Helvetica, sans-serif;
   letter-spacing: 0;
 }
 
@@ -55,8 +65,40 @@ button {
 h1,
 h2,
 h3 {
-  font-family: var(--font-onest), Arial, Helvetica, sans-serif;
-  letter-spacing: -0.035em;
+  font-family: var(--font-playfair), Georgia, serif;
+  letter-spacing: 0;
+}
+
+.font-display {
+  font-family: var(--font-playfair), Georgia, serif;
+}
+
+.font-ui {
+  font-family: var(--font-manrope), Arial, Helvetica, sans-serif;
+}
+
+.luxury-grain::after {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.8) 0 1px, transparent 1px),
+    radial-gradient(circle at 80% 40%, rgba(23, 17, 17, 0.08) 0 1px, transparent 1px);
+  background-size: 18px 18px, 24px 24px;
+  content: "";
+  inset: 0;
+  opacity: 0.18;
+  pointer-events: none;
+  position: absolute;
+}
+
+.siri-glow {
+  filter: drop-shadow(0 28px 48px rgba(142, 92, 196, 0.28));
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 ::selection {
