@@ -42,3 +42,14 @@ The third pass removes the generic SaaS feeling from the core chat:
 3. The chat header is now a large Siri-like voice stage with layered morphing color fields, pulse bars, and distinct idle/thinking states.
 4. The visual language is softer and more premium: warm off-white app background, glass panels, rose/lavender/sun light washes, lighter weights, and no negative letter spacing.
 5. Figma now contains a visible "Premium Voice Chat" wrapper with idle, thinking, and motion-spec frames using the same Playfair + Manrope typography.
+
+## Golden Apple Style Correction
+
+The fourth pass corrects the identity away from beige/serif wellness and toward a Golden Apple inspired Telegram Mini App:
+
+1. Typography moves to Golos Text for UI and Unbounded for sharp display headings.
+2. Palette removes beige and uses clean off-white, black, lime-yellow, violet, and pink accents.
+3. Screens gain thin graphic line fields, accent strokes, and brighter motion details.
+4. The method library expands to 10 approaches: CBT, Gestalt, ACT, Schema, Mindfulness, DBT, CFT, Somatic, Narrative, and SFBT.
+5. Chat now has a guided session rail: understand, stabilize, step. It leads the user without exposing command chips.
+6. Telegram Mini App behavior is initialized with ready, expand, header/background color, closing confirmation, native haptics, vibration fallback, and short WebAudio click feedback.

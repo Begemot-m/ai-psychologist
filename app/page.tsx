@@ -286,6 +286,61 @@ const methods: MethodOption[] = [
     icon: Wind,
     tone: "lavender",
   },
+  {
+    id: "dbt",
+    title: "DBT",
+    caption: "эмоции и навыки",
+    bestFor: "когда эмоция очень сильная и нужно пережить волну без разрушений",
+    howWorks: "Даёт конкретные навыки: выдержать пик, снизить импульс, назвать эмоцию и выбрать действие вместо срыва.",
+    flow: ["проверить риск", "снизить импульс", "назвать эмоцию", "выбрать навык"],
+    question: "Что хочется сделать на пике эмоции, но потом может навредить?",
+    icon: Waves,
+    tone: "green",
+  },
+  {
+    id: "compassion",
+    title: "CFT",
+    caption: "самосострадание",
+    bestFor: "когда внутри много стыда, вины или жёсткого внутреннего критика",
+    howWorks: "Переводит разговор с собой из нападения в поддержку: не оправдывает, а помогает выдержать и действовать человечнее.",
+    flow: ["заметить критика", "снизить стыд", "найти тёплый тон", "выбрать заботу"],
+    question: "Как бы ты сказал это близкому человеку в такой же ситуации?",
+    icon: HeartHandshake,
+    tone: "pink",
+  },
+  {
+    id: "somatic",
+    title: "Somatic",
+    caption: "нервная система",
+    bestFor: "когда тело уже в тревоге, а голова не успевает догнать",
+    howWorks: "Начинает с физиологии: дыхание, мышцы, ориентация в пространстве, температура, опора и ритм.",
+    flow: ["найти опору", "снизить тонус", "вернуть ориентацию", "закрепить ритм"],
+    question: "Где в теле сейчас самый громкий сигнал?",
+    icon: Activity,
+    tone: "sun",
+  },
+  {
+    id: "narrative",
+    title: "Нарративный",
+    caption: "история и смысл",
+    bestFor: "когда проблема будто стала частью личности: «я такой», «со мной всегда так»",
+    howWorks: "Отделяет человека от проблемы и помогает увидеть исключения, ценности и более точную историю о себе.",
+    flow: ["назвать проблему", "отделить себя", "найти исключения", "переписать смысл"],
+    question: "Какое имя можно дать этой проблеме, чтобы она была не тобой?",
+    icon: BookOpen,
+    tone: "lavender",
+  },
+  {
+    id: "solution",
+    title: "SFBT",
+    caption: "решение и шаг",
+    bestFor: "когда не хочется долго копать, нужен заметный маленький сдвиг сегодня",
+    howWorks: "Фокусируется на желаемом изменении, уже работающих исключениях и ближайшем действии на 10 минут.",
+    flow: ["описать сдвиг", "найти исключение", "оценить шкалу", "сделать шаг"],
+    question: "Как ты поймёшь через час, что стало хотя бы на 5% легче?",
+    icon: Check,
+    tone: "green",
+  },
 ];
 
 const scriptedReplies = [
@@ -295,6 +350,8 @@ const scriptedReplies = [
   "Если смотреть по КПТ, нам нужна мысль, которая разгоняет состояние. Запиши её одной фразой. Потом спросим: какие факты за неё, какие против, и какой более честный вариант звучит без самообмана.",
   "Мягкое задание: сегодня выбери одно действие на 10 минут, которое поддерживает тебя, а не доказывает твою продуктивность. После отметь: стало легче, тяжелее или так же?",
 ];
+
+const supportPath = ["понять", "стабилиз.", "шаг"];
 
 const programs = [
   {
@@ -350,6 +407,7 @@ const profileItems = [
 ];
 
 let messageCounter = 0;
+let audioContext: AudioContext | null = null;
 
 function makeMessage(role: Role, text: string): Message {
   messageCounter += 1;
@@ -372,6 +430,34 @@ function haptic(style: "light" | "medium" | "heavy" = "light") {
   ).Telegram?.WebApp?.HapticFeedback;
   telegram?.impactOccurred?.(style);
   if (!telegram && navigator.vibrate) navigator.vibrate(style === "heavy" ? 22 : style === "medium" ? 14 : 7);
+  try {
+    const AudioCtor =
+      window.AudioContext ||
+      (
+        window as Window & {
+          webkitAudioContext?: typeof AudioContext;
+        }
+      ).webkitAudioContext;
+    if (!AudioCtor) return;
+    audioContext ??= new AudioCtor();
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const tone = style === "heavy" ? 190 : style === "medium" ? 330 : 520;
+    const duration = style === "heavy" ? 0.085 : style === "medium" ? 0.055 : 0.035;
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(tone, now);
+    oscillator.frequency.exponentialRampToValueAtTime(tone * 0.72, now + duration);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(style === "heavy" ? 0.038 : 0.024, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(now);
+    oscillator.stop(now + duration + 0.01);
+  } catch {
+    // Audio feedback is progressive enhancement for Telegram/WebView taps.
+  }
 }
 
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -433,10 +519,10 @@ function AppButton({
 function ScreenShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[var(--page)] text-[var(--ink)] sm:flex sm:items-center sm:justify-center sm:p-6">
-      <div className="luxury-grain relative mx-auto flex h-[100svh] w-full max-w-[430px] overflow-hidden bg-[var(--app)] shadow-[0_30px_100px_rgba(54,35,72,0.22)] sm:h-[calc(100svh-48px)] sm:max-h-[844px] sm:rounded-[46px] sm:border sm:border-white/55">
-        <div className="pointer-events-none absolute -right-20 top-12 h-52 w-52 rounded-full bg-[var(--lavender)]/30 blur-3xl" />
-        <div className="pointer-events-none absolute -left-24 top-72 h-48 w-48 rounded-full bg-[var(--pink)]/22 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-8 right-10 h-44 w-44 rounded-full bg-[var(--sun)]/18 blur-3xl" />
+      <div className="luxury-grain relative mx-auto flex h-[100svh] w-full max-w-[430px] overflow-hidden bg-[var(--app)] shadow-[0_30px_100px_rgba(12,12,12,0.18)] sm:h-[calc(100svh-48px)] sm:max-h-[844px] sm:rounded-[46px] sm:border sm:border-white/80">
+        <div className="pointer-events-none absolute -right-20 top-12 h-52 w-52 rounded-full bg-[var(--lavender)]/20 blur-3xl" />
+        <div className="pointer-events-none absolute -left-24 top-72 h-48 w-48 rounded-full bg-[var(--green)]/22 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-8 right-10 h-44 w-44 rounded-full bg-[var(--pink)]/16 blur-3xl" />
         <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-14 bg-gradient-to-b from-[var(--app)]/90 to-transparent" />
         <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
       </div>
@@ -529,14 +615,44 @@ function VoiceBars({ thinking }: { thinking: boolean }) {
 
 function VoiceStage({ thinking, title, subtitle }: { thinking: boolean; title: string; subtitle: string }) {
   return (
-    <div className="relative overflow-hidden rounded-[34px] border border-white/70 bg-white/50 px-4 pb-4 pt-4 shadow-[0_24px_68px_var(--soft-shadow)] backdrop-blur-2xl">
-      <div className="absolute -left-10 top-8 h-32 w-32 rounded-full bg-[var(--pink)]/24 blur-3xl" />
-      <div className="absolute -right-10 bottom-2 h-36 w-36 rounded-full bg-[var(--lavender)]/34 blur-3xl" />
+    <div className="line-field relative overflow-hidden rounded-[34px] border border-black/8 bg-white/82 px-4 pb-4 pt-4 shadow-[0_24px_68px_var(--soft-shadow)] backdrop-blur-2xl">
+      <div className="absolute -left-10 top-8 h-32 w-32 rounded-full bg-[var(--pink)]/20 blur-3xl" />
+      <div className="absolute -right-10 bottom-2 h-36 w-36 rounded-full bg-[var(--green)]/22 blur-3xl" />
+      <motion.div
+        animate={{ x: ["-20%", "110%"] }}
+        transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute left-0 top-0 h-1 w-40 rounded-full ga-accent"
+      />
       <div className="relative flex flex-col items-center text-center">
         <VoiceOrb thinking={thinking} />
         <VoiceBars thinking={thinking} />
         <p className="font-display text-[27px] leading-[1.02]">{title}</p>
         <p className="mt-1.5 max-w-[285px] text-[11px] font-semibold leading-relaxed text-[var(--muted)]">{subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
+function SessionRail({ activeIndex }: { activeIndex: number }) {
+  return (
+    <div className="mt-3 rounded-[24px] border border-black/8 bg-white/74 p-2 shadow-[0_14px_36px_rgba(12,12,12,0.06)] backdrop-blur">
+      <div className="grid grid-cols-3 gap-1">
+        {supportPath.map((step, index) => {
+          const active = index <= activeIndex;
+          return (
+            <motion.div
+              key={step}
+              animate={{ opacity: active ? 1 : 0.42 }}
+              className={cx(
+                "relative overflow-hidden rounded-full px-2 py-2 text-center text-[9px] font-extrabold uppercase",
+                active ? "bg-[var(--ink)] text-white" : "bg-[var(--card)] text-black/50",
+              )}
+            >
+              {active && <span className="absolute inset-x-3 top-0 h-0.5 rounded-full ga-accent" />}
+              <span className="relative">{index + 1}. {step}</span>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
@@ -891,6 +1007,7 @@ function PremiumChatScreen({
   const [replyIndex, setReplyIndex] = useState(0);
   const [thinking, setThinking] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const activeStep = Math.min(Math.max(messages.filter((message) => message.role === "user").length, 0), supportPath.length - 1);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -913,13 +1030,14 @@ function PremiumChatScreen({
 
   return (
     <div className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--app)]">
-      <div className="pointer-events-none absolute -left-28 top-8 h-72 w-72 rounded-full bg-[var(--pink)]/20 blur-3xl" />
-      <div className="pointer-events-none absolute -right-28 top-44 h-80 w-80 rounded-full bg-[var(--lavender)]/28 blur-3xl" />
+      <div className="pointer-events-none absolute -left-28 top-8 h-72 w-72 rounded-full bg-[var(--green)]/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-28 top-44 h-80 w-80 rounded-full bg-[var(--lavender)]/22 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-20 left-10 h-52 w-52 rounded-full bg-[var(--pink)]/14 blur-3xl" />
       <header className="relative z-10 shrink-0 px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
           <div className="min-w-0">
-            <p className="font-display truncate text-[22px] leading-none">{module.title}</p>
-            <p className="mt-1 text-[11px] font-bold uppercase text-black/45">{method.title} · free</p>
+            <p className="font-display truncate text-[19px] font-bold leading-none">{module.title}</p>
+            <p className="mt-1 text-[11px] font-extrabold uppercase text-black/45">{method.title} · TG mini app</p>
           </div>
           <motion.button
             type="button"
@@ -939,9 +1057,10 @@ function PremiumChatScreen({
       <div className="relative z-10 shrink-0 px-4">
         <VoiceStage
           thinking={thinking}
-          title={thinking ? "Слушаю глубже" : "Можно писать"}
-          subtitle={thinking ? "Сверяю тон, отделяю поддержку от советов и подбираю один бережный следующий шаг." : "Без меню действий. Просто опиши состояние своими словами, а я отвечу как психологический ассистент."}
+          title={thinking ? "Собираю ответ" : "Я веду сессию"}
+          subtitle={thinking ? "Сверяю состояние, не поддакиваю и выбираю следующий бережный шаг." : "Не меню команд. Пиши как есть — я проведу через понимание, стабилизацию и действие."}
         />
+        <SessionRail activeIndex={activeStep} />
       </div>
 
       <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-4">
@@ -956,10 +1075,10 @@ function PremiumChatScreen({
             >
               <div
                 className={cx(
-                  "max-w-[86%] rounded-[28px] px-4 py-3 text-[14px] leading-relaxed shadow-[0_16px_36px_rgba(44,26,18,0.07)]",
+                  "max-w-[86%] rounded-[26px] px-4 py-3 text-[14px] leading-relaxed shadow-[0_16px_36px_rgba(12,12,12,0.07)]",
                   message.role === "user"
                     ? "rounded-br-[10px] bg-[var(--ink)] text-white"
-                    : "rounded-bl-[10px] border border-white/72 bg-white/72 text-[var(--ink)] backdrop-blur",
+                    : "rounded-bl-[10px] border border-black/8 bg-white/86 text-[var(--ink)] backdrop-blur",
                 )}
               >
                 {message.text}
@@ -968,7 +1087,7 @@ function PremiumChatScreen({
           ))}
           {thinking && (
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start">
-              <div className="rounded-[24px] rounded-bl-[10px] border border-white/70 bg-white/55 px-4 py-3 shadow-[0_16px_36px_rgba(44,26,18,0.06)] backdrop-blur">
+              <div className="rounded-[24px] rounded-bl-[10px] border border-black/8 bg-white/76 px-4 py-3 shadow-[0_16px_36px_rgba(12,12,12,0.06)] backdrop-blur">
                 <VoiceBars thinking />
               </div>
             </motion.div>
@@ -978,7 +1097,7 @@ function PremiumChatScreen({
       </div>
 
       <div className="relative z-10 shrink-0 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-2">
-        <div className="flex items-center gap-2 rounded-full border border-white/70 bg-white/68 p-2 shadow-[0_18px_52px_rgba(44,26,18,0.1)] backdrop-blur-2xl">
+        <div className="flex items-center gap-2 rounded-full border border-black/8 bg-white/86 p-2 shadow-[0_18px_52px_rgba(12,12,12,0.1)] backdrop-blur-2xl">
           <input
             value={input}
             onChange={(event) => setInput(event.target.value)}
@@ -1292,7 +1411,12 @@ function BottomTabs({ active, onChange }: { active: Tab; onChange: (tab: Tab) =>
 
   return (
     <nav className="shrink-0 bg-transparent px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2">
-      <div className="grid grid-cols-3 gap-1 rounded-full border border-white/70 bg-white/62 p-1 shadow-[0_18px_52px_rgba(44,26,18,0.1)] backdrop-blur-2xl">
+      <div className="relative grid grid-cols-3 gap-1 overflow-hidden rounded-full border border-black/8 bg-white/88 p-1 shadow-[0_18px_52px_rgba(12,12,12,0.1)] backdrop-blur-2xl">
+        <motion.span
+          animate={{ x: ["-30%", "135%"] }}
+          transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut" }}
+          className="pointer-events-none absolute top-0 h-1 w-24 rounded-full ga-accent"
+        />
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const selected = active === tab.id;
@@ -1305,9 +1429,9 @@ function BottomTabs({ active, onChange }: { active: Tab; onChange: (tab: Tab) =>
                 haptic("light");
                 onChange(tab.id);
               }}
-              className={cx("relative flex flex-col items-center gap-1 rounded-full py-2 text-[11px] font-extrabold transition focus:outline-none", selected ? "text-[var(--ink)]" : "text-black/35")}
+              className={cx("relative flex flex-col items-center gap-1 rounded-full py-2 text-[11px] font-extrabold transition focus:outline-none", selected ? "text-white" : "text-black/42")}
             >
-              {selected && <motion.span layoutId="active-tab" className="absolute inset-0 rounded-full bg-white shadow-[0_8px_20px_rgba(44,26,18,0.08)]" />}
+              {selected && <motion.span layoutId="active-tab" className="absolute inset-0 rounded-full bg-[var(--ink)] shadow-[0_8px_20px_rgba(12,12,12,0.16)]" />}
               <Icon className="relative" size={19} />
               <span className="relative">{tab.label}</span>
             </motion.button>
@@ -1366,6 +1490,31 @@ export default function Home() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [selectedModule, setSelectedModule] = useState<ModuleOption | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<MethodOption | null>(null);
+
+  useEffect(() => {
+    const telegram = (
+      window as Window & {
+        Telegram?: {
+          WebApp?: {
+            ready?: () => void;
+            expand?: () => void;
+            enableClosingConfirmation?: () => void;
+            setHeaderColor?: (color: string) => void;
+            setBackgroundColor?: (color: string) => void;
+          };
+        };
+      }
+    ).Telegram?.WebApp;
+    telegram?.ready?.();
+    telegram?.expand?.();
+    telegram?.enableClosingConfirmation?.();
+    telegram?.setHeaderColor?.("#fbfbf6");
+    telegram?.setBackgroundColor?.("#fbfbf6");
+  }, []);
+
+  useEffect(() => {
+    haptic("light");
+  }, [stage]);
 
   function resetConstructor() {
     setSelectedModule(null);

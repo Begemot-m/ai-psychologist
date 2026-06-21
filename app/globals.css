@@ -1,38 +1,39 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&family=Unbounded:wght@500;600;700;800&display=swap");
 @import "tailwindcss";
 @source "./page.tsx";
 @source "./layout.tsx";
 
 :root {
-  --page: #ded7ed;
-  --app: #fffaf5;
-  --ink: #171111;
-  --muted: rgba(23, 17, 17, 0.6);
-  --card: #f6eee7;
-  --glass: rgba(255, 255, 255, 0.68);
-  --lavender: #c7b5ff;
-  --lavender-soft: rgba(199, 181, 255, 0.28);
-  --lavender-deep: #6e53d7;
-  --pink: #ff9eba;
-  --pink-soft: rgba(255, 158, 186, 0.22);
-  --pink-deep: #d94e76;
-  --green: #86cfa2;
-  --green-soft: rgba(134, 207, 162, 0.2);
-  --green-deep: #2f8f59;
-  --sun: #ffd98f;
-  --sun-soft: rgba(255, 217, 143, 0.28);
-  --sun-deep: #a66f00;
-  --rose-shadow: rgba(174, 80, 106, 0.22);
-  --soft-shadow: rgba(44, 26, 18, 0.1);
-  --font-manrope: "Manrope";
-  --font-playfair: "Playfair Display";
+  --page: #f3f4f0;
+  --app: #fbfbf6;
+  --ink: #0c0c0c;
+  --muted: rgba(12, 12, 12, 0.58);
+  --card: #f0f1e8;
+  --glass: rgba(255, 255, 255, 0.78);
+  --lavender: #8b5cff;
+  --lavender-soft: rgba(139, 92, 255, 0.14);
+  --lavender-deep: #5d31d8;
+  --pink: #ff4f9a;
+  --pink-soft: rgba(255, 79, 154, 0.14);
+  --pink-deep: #d91b72;
+  --green: #c8ff00;
+  --green-soft: rgba(200, 255, 0, 0.22);
+  --green-deep: #5a7f00;
+  --sun: #ffe100;
+  --sun-soft: rgba(255, 225, 0, 0.24);
+  --sun-deep: #806d00;
+  --line: rgba(12, 12, 12, 0.12);
+  --rose-shadow: rgba(255, 79, 154, 0.2);
+  --soft-shadow: rgba(12, 12, 12, 0.12);
+  --font-golos: "Golos Text";
+  --font-unbounded: "Unbounded";
 }
 
 @theme inline {
   --color-background: var(--app);
   --color-foreground: var(--ink);
-  --font-sans: var(--font-manrope);
-  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-golos);
+  --font-serif: var(--font-unbounded);
 }
 
 * {
@@ -44,11 +45,12 @@ body {
   margin: 0;
   min-height: 100%;
   background:
-    radial-gradient(circle at 18% 12%, rgba(255, 214, 143, 0.34), transparent 30%),
-    radial-gradient(circle at 88% 8%, rgba(199, 181, 255, 0.5), transparent 32%),
-    linear-gradient(135deg, #efe8f3 0%, #e7ddea 52%, #dcd4e8 100%);
+    radial-gradient(circle at 16% 10%, rgba(200, 255, 0, 0.28), transparent 28%),
+    radial-gradient(circle at 84% 4%, rgba(139, 92, 255, 0.24), transparent 30%),
+    radial-gradient(circle at 92% 82%, rgba(255, 79, 154, 0.18), transparent 30%),
+    linear-gradient(135deg, #f8f8f2 0%, #eef0ea 100%);
   color: var(--ink);
-  font-family: var(--font-manrope), Arial, Helvetica, sans-serif;
+  font-family: var(--font-golos), Arial, Helvetica, sans-serif;
   letter-spacing: 0;
 }
 
@@ -65,32 +67,42 @@ button {
 h1,
 h2,
 h3 {
-  font-family: var(--font-playfair), Georgia, serif;
-  letter-spacing: 0;
+  font-family: var(--font-unbounded), Arial, Helvetica, sans-serif;
+  letter-spacing: -0.02em;
 }
 
 .font-display {
-  font-family: var(--font-playfair), Georgia, serif;
+  font-family: var(--font-unbounded), Arial, Helvetica, sans-serif;
 }
 
 .font-ui {
-  font-family: var(--font-manrope), Arial, Helvetica, sans-serif;
+  font-family: var(--font-golos), Arial, Helvetica, sans-serif;
 }
 
 .luxury-grain::after {
   background-image:
-    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.8) 0 1px, transparent 1px),
-    radial-gradient(circle at 80% 40%, rgba(23, 17, 17, 0.08) 0 1px, transparent 1px);
-  background-size: 18px 18px, 24px 24px;
+    linear-gradient(115deg, transparent 0 14px, rgba(12, 12, 12, 0.08) 14px 15px, transparent 15px 36px),
+    radial-gradient(circle at 20% 20%, rgba(200, 255, 0, 0.55) 0 1px, transparent 1px);
+  background-size: 44px 44px, 18px 18px;
   content: "";
   inset: 0;
-  opacity: 0.18;
+  opacity: 0.22;
   pointer-events: none;
   position: absolute;
 }
 
 .siri-glow {
-  filter: drop-shadow(0 28px 48px rgba(142, 92, 196, 0.28));
+  filter: drop-shadow(0 22px 44px rgba(139, 92, 255, 0.28));
+}
+
+.line-field {
+  background:
+    linear-gradient(90deg, transparent 0 18px, rgba(12, 12, 12, 0.08) 18px 19px, transparent 19px 38px),
+    linear-gradient(0deg, transparent 0 18px, rgba(12, 12, 12, 0.06) 18px 19px, transparent 19px 38px);
+}
+
+.ga-accent {
+  background: linear-gradient(135deg, #c8ff00 0%, #ffe100 38%, #ff4f9a 72%, #8b5cff 100%);
 }
 
 .hide-scrollbar {
