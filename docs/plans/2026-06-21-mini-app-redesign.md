@@ -21,3 +21,14 @@ Use a light "Golden Apple" inspired interface: almost-white background, graphite
 ## Implementation Notes
 
 Keep the prototype in React state on `app/page.tsx`. Avoid API, auth, database, and payment dependencies in the demo path. Existing backend files can stay in the repo for later product stages, but the primary prototype should be self-contained and easy to run locally.
+
+## Wow Iteration
+
+The second pass focuses on the "better and safer than a generic GPT chat" feeling:
+
+1. Onboarding now explains that the assistant asks before advising, avoids sycophancy, and is designed around psychologist-reviewed support patterns.
+2. Bot construction starts with a five-step intake so the user feels their situation is being understood before any method is chosen.
+3. Module and method selection use horizontal carousels with expanded descriptions, best-fit guidance, tags, outcomes, and first questions.
+4. Chat uses a Siri-like animated voice orb and a live thinking panel instead of a human avatar, with compact layout that fits the mobile viewport.
+5. Programs start with a meditation timer card, animated progress, and expanded program plans with concrete steps and infographic-like metadata.
+6. Micro-haptics are attached to taps where supported, while Framer Motion handles smooth tap, entrance, and state animations.

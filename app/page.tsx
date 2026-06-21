@@ -2,21 +2,25 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Activity,
   BadgeCheck,
+  BarChart3,
   Bell,
   BookOpen,
   Brain,
+  Check,
+  ChevronLeft,
   ChevronRight,
   CircleHelp,
   Flame,
-  Heart,
+  HeartHandshake,
   Home as HomeIcon,
   Leaf,
-  LockKeyholeOpen,
   MessageCircle,
   Moon,
   Orbit,
-  Phone,
+  Pause,
+  Play,
   RotateCcw,
   Send,
   Settings,
@@ -25,29 +29,49 @@ import {
   Star,
   SunMedium,
   Target,
+  TimerReset,
   Waves,
   Wind,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-type Stage = "onboarding" | "module" | "method" | "main" | "premium";
+type Stage = "onboarding" | "intake" | "module" | "method" | "main" | "premium";
 type Tab = "chat" | "programs" | "profile";
 type Role = "assistant" | "user";
+type Tone = "lavender" | "pink" | "green" | "sun";
 
 type ModuleOption = {
   id: string;
   title: string;
   caption: string;
+  description: string;
+  outcomes: string[];
+  tags: string[];
+  prompt: string;
   icon: LucideIcon;
-  tone: "lavender" | "pink" | "green";
+  tone: Tone;
 };
 
 type MethodOption = {
   id: string;
   title: string;
   caption: string;
+  bestFor: string;
+  howWorks: string;
+  flow: string[];
+  question: string;
   icon: LucideIcon;
+  tone: Tone;
+};
+
+type IntakeQuestion = {
+  id: string;
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  options: Array<{ label: string; detail: string; icon: LucideIcon; value: string }>;
 };
 
 type Message = {
@@ -58,55 +82,227 @@ type Message = {
 
 const onboarding = [
   {
-    title: "Сопровождение, а не терапия",
-    text: "Помогаем разобраться в чувствах и подобрать инструменты самопомощи. Это не заменяет работу с живым специалистом.",
+    title: "Психологический ассистент, который не поддакивает",
+    text: "Обычный чат часто соглашается и быстро раздаёт советы. Здесь ответы построены как бережное сопровождение: сначала понять состояние, потом подобрать самопомощь.",
     icon: ShieldCheck,
   },
   {
-    title: "Сначала понимаем состояние",
-    text: "Мягко уточняем, что происходит, и собираем контекст без давления, оценок и канцелярита.",
-    icon: Heart,
+    title: "Методики собирали практикующие психологи",
+    text: "Внутри сценарии КПТ, ACT, гештальта, майндфулнеса и кризисной поддержки. Ассистент не спорит с болью и не обесценивает её.",
+    icon: HeartHandshake,
   },
   {
-    title: "Не просто чат",
-    text: "Внутри структурированные подходы, проверенные практикующими психологами: КПТ, ACT, гештальт и другие методы.",
+    title: "Безопаснее, чем искать ответ в одиночку",
+    text: "Мы отличаем поддержку от терапии, напоминаем про живых специалистов и помогаем делать маленькие действия, а не зависать в бесконечном диалоге.",
+    icon: BadgeCheck,
+  },
+  {
+    title: "Сначала спросим, потом ответим",
+    text: "Перед чатом есть короткое анкетирование. Оно создаёт ощущение, что твоей ситуацией правда интересуются, а не кидают универсальную фразу.",
     icon: Sparkles,
   },
+];
+
+const intakeQuestions: IntakeQuestion[] = [
   {
-    title: "Все форматы открыты",
-    text: "На этапе прототипа можно свободно пройти все модули, методы, программы и premium-экран без оплаты.",
-    icon: LockKeyholeOpen,
+    id: "state",
+    eyebrow: "1 из 5",
+    title: "Что сейчас сильнее всего давит?",
+    subtitle: "Выбери главный фокус. Потом можно будет поменять.",
+    options: [
+      { label: "Тревога", detail: "много мыслей, напряжение, ожидание плохого", icon: Wind, value: "anxiety" },
+      { label: "Усталость", detail: "нет сил, всё раздражает, хочется выключиться", icon: Flame, value: "burnout" },
+      { label: "Отношения", detail: "сложно говорить, держать границы, не обвинять себя", icon: HeartHandshake, value: "relations" },
+    ],
+  },
+  {
+    id: "body",
+    eyebrow: "2 из 5",
+    title: "Где это заметнее?",
+    subtitle: "Так ассистент подберёт более точное упражнение.",
+    options: [
+      { label: "В теле", detail: "ком в горле, грудь, живот, плечи", icon: Activity, value: "body" },
+      { label: "В мыслях", detail: "прокручивание, катастрофы, самокритика", icon: Brain, value: "thoughts" },
+      { label: "В поведении", detail: "избегание, срывы, прокрастинация", icon: Zap, value: "actions" },
+    ],
+  },
+  {
+    id: "intensity",
+    eyebrow: "3 из 5",
+    title: "Насколько это остро прямо сейчас?",
+    subtitle: "Нам важно не перегрузить тебя техникой.",
+    options: [
+      { label: "3-4 из 10", detail: "неприятно, но могу размышлять", icon: Leaf, value: "mild" },
+      { label: "5-7 из 10", detail: "накрывает, нужна опора и структура", icon: Waves, value: "medium" },
+      { label: "8-10 из 10", detail: "очень тяжело, нужен максимально простой шаг", icon: ShieldCheck, value: "high" },
+    ],
+  },
+  {
+    id: "style",
+    eyebrow: "4 из 5",
+    title: "Какой тон сейчас нужен?",
+    subtitle: "Ассистент не обязан звучать одинаково для всех.",
+    options: [
+      { label: "Мягко", detail: "больше поддержки, меньше анализа", icon: HeartHandshake, value: "soft" },
+      { label: "Структурно", detail: "план, шаги, вопросы по делу", icon: Target, value: "structured" },
+      { label: "Очень кратко", detail: "без длинных объяснений, только ближайший шаг", icon: TimerReset, value: "brief" },
+    ],
+  },
+  {
+    id: "goal",
+    eyebrow: "5 из 5",
+    title: "Что будет хорошим результатом сегодня?",
+    subtitle: "Не «починить жизнь», а сделать один посильный сдвиг.",
+    options: [
+      { label: "Успокоиться", detail: "снизить интенсивность и вернуться в тело", icon: Wind, value: "calm" },
+      { label: "Понять себя", detail: "назвать чувство и потребность", icon: CircleHelp, value: "understand" },
+      { label: "Сделать шаг", detail: "выбрать действие на 10-15 минут", icon: Check, value: "step" },
+    ],
   },
 ];
 
 const modules: ModuleOption[] = [
-  { id: "anxiety", title: "Тревожность", caption: "мысли, тело, сон", icon: Wind, tone: "lavender" },
-  { id: "burnout", title: "Выгорание", caption: "ресурс и границы", icon: Flame, tone: "pink" },
-  { id: "relations", title: "Отношения", caption: "контакт и опора", icon: Heart, tone: "green" },
-  { id: "esteem", title: "Самооценка", caption: "внутренний критик", icon: Star, tone: "lavender" },
-  { id: "sleep", title: "Сон", caption: "ритуалы и тревога", icon: Moon, tone: "pink" },
-  { id: "crisis", title: "Кризис", caption: "план безопасности", icon: ShieldCheck, tone: "green" },
-  { id: "psychiatry", title: "Терапия у психиатра", caption: "дневник состояния", icon: Brain, tone: "lavender" },
-  { id: "grief", title: "Потеря и горе", caption: "бережное проживание", icon: Waves, tone: "pink" },
+  {
+    id: "anxiety",
+    title: "Тревожность",
+    caption: "мысли, тело, сон",
+    description: "Помогает снизить интенсивность тревоги, отделить факты от прогнозов и вернуть внимание в настоящий момент.",
+    outcomes: ["быстрая стабилизация", "карта тревожной мысли", "план маленького действия"],
+    tags: ["КПТ", "ACT", "дыхание"],
+    prompt: "Начнём с того, как тревога звучит в голове и где живёт в теле.",
+    icon: Wind,
+    tone: "lavender",
+  },
+  {
+    id: "burnout",
+    title: "Выгорание",
+    caption: "ресурс и границы",
+    description: "Для состояния, когда всё стало слишком дорого по энергии: работа, люди, решения и даже отдых.",
+    outcomes: ["оценка ресурса", "границы на сегодня", "мягкое восстановление"],
+    tags: ["энергия", "границы", "ритм"],
+    prompt: "Сначала поймём, где утекают силы и что можно снять уже сегодня.",
+    icon: Flame,
+    tone: "pink",
+  },
+  {
+    id: "relations",
+    title: "Отношения",
+    caption: "контакт и опора",
+    description: "Помогает не провалиться в вину или нападение, а сформулировать чувства, границы и просьбу.",
+    outcomes: ["я-сообщение", "границы", "подготовка разговора"],
+    tags: ["диалог", "границы", "эмоции"],
+    prompt: "Разберём, что ты чувствуешь, чего хочешь и какой разговор будет бережным.",
+    icon: HeartHandshake,
+    tone: "green",
+  },
+  {
+    id: "esteem",
+    title: "Самооценка",
+    caption: "критик и опора",
+    description: "Для моментов, когда внутренний голос становится жёстче реальности и забирает право ошибаться.",
+    outcomes: ["голос критика", "факты о себе", "поддерживающая формулировка"],
+    tags: ["самокритика", "стыд", "опора"],
+    prompt: "Посмотрим, где говорит критик, а где можно вернуть себе человеческий масштаб.",
+    icon: Star,
+    tone: "sun",
+  },
+  {
+    id: "sleep",
+    title: "Сон",
+    caption: "вечер и разгрузка",
+    description: "Помогает не спорить с бессонницей, а разгрузить голову и собрать вечерний ритуал.",
+    outcomes: ["разгрузка мыслей", "ритуал сна", "снижение возбуждения"],
+    tags: ["сон", "ритуал", "тело"],
+    prompt: "Сделаем так, чтобы ночь перестала быть местом для тяжёлых переговоров с собой.",
+    icon: Moon,
+    tone: "lavender",
+  },
+  {
+    id: "crisis",
+    title: "Острое состояние",
+    caption: "безопасность и первый шаг",
+    description: "Максимально простая поддержка на ближайшие минуты: стабилизация, контакт с реальностью, план помощи.",
+    outcomes: ["заземление", "план безопасности", "контакт с помощью"],
+    tags: ["кризис", "простые шаги", "помощь"],
+    prompt: "Сейчас не будем усложнять. Сначала безопасность и самый маленький следующий шаг.",
+    icon: ShieldCheck,
+    tone: "pink",
+  },
 ];
 
 const methods: MethodOption[] = [
-  { id: "cbt", title: "КПТ", caption: "мысли, действия и проверка гипотез", icon: Target },
-  { id: "gestalt", title: "Гештальт", caption: "контакт с чувствами здесь и сейчас", icon: Orbit },
-  { id: "analysis", title: "Психоанализ", caption: "повторяющиеся сценарии и смыслы", icon: Brain },
-  { id: "act", title: "ACT / принятие", caption: "ценности, гибкость и опора", icon: Leaf },
-  { id: "schema", title: "Схема-терапия", caption: "устойчивые паттерны и потребности", icon: Sparkles },
-  { id: "mindfulness", title: "Майндфулнес", caption: "внимание к телу и настоящему моменту", icon: Wind },
+  {
+    id: "cbt",
+    title: "КПТ",
+    caption: "мысли, факты, действия",
+    bestFor: "когда мысли разгоняют тревогу или самокритику",
+    howWorks: "Помогает увидеть автоматическую мысль, проверить её на факты и выбрать действие, которое возвращает контроль.",
+    flow: ["заметить мысль", "найти искажение", "проверить факты", "сделать маленький шаг"],
+    question: "Какая мысль сейчас звучит громче всего?",
+    icon: Target,
+    tone: "lavender",
+  },
+  {
+    id: "gestalt",
+    title: "Гештальт",
+    caption: "чувства и потребности",
+    bestFor: "когда много эмоций, но сложно понять, о чём они",
+    howWorks: "Возвращает внимание к переживанию здесь и сейчас: что ты чувствуешь, чего хочешь, где граница.",
+    flow: ["назвать чувство", "найти потребность", "заметить границу", "сформулировать просьбу"],
+    question: "Если чувство могло бы говорить, что бы оно попросило?",
+    icon: Orbit,
+    tone: "green",
+  },
+  {
+    id: "act",
+    title: "ACT",
+    caption: "принятие и ценности",
+    bestFor: "когда нельзя быстро убрать боль, но можно выбрать направление",
+    howWorks: "Не спорит с переживанием, а помогает отделиться от мысли и сделать шаг в сторону ценностей.",
+    flow: ["заметить мысль", "дать ей имя", "найти ценность", "выбрать действие"],
+    question: "Что для тебя важно даже рядом с этой тревогой?",
+    icon: Leaf,
+    tone: "pink",
+  },
+  {
+    id: "schema",
+    title: "Схема-терапия",
+    caption: "паттерны и режимы",
+    bestFor: "когда ситуация повторяется и кажется знакомо болезненной",
+    howWorks: "Помогает увидеть устойчивый сценарий, режим внутреннего критика или уязвимой части и дать ей другой ответ.",
+    flow: ["узнать сценарий", "назвать режим", "отделить прошлое", "поддержать взрослую часть"],
+    question: "На что из прошлого это похоже по ощущению?",
+    icon: Sparkles,
+    tone: "sun",
+  },
+  {
+    id: "mindfulness",
+    title: "Майндфулнес",
+    caption: "тело и внимание",
+    bestFor: "когда нужно быстро снизить накал и вернуться в тело",
+    howWorks: "Через дыхание, ощущения и наблюдение помогает перестать слипаться с мыслью и стабилизироваться.",
+    flow: ["дыхание", "ощущения", "звуки", "мягкое действие"],
+    question: "Что ты замечаешь телом прямо сейчас?",
+    icon: Wind,
+    tone: "lavender",
+  },
 ];
 
-const quickPrompts = ["Мне тревожно", "Не могу уснуть", "Расскажи технику", "Нужна опора"];
+const quickPrompts = ["Мне тревожно", "Разложи по шагам", "Дай технику", "Что со мной?"];
+
+const thinkingLines = [
+  "сверяю тон с твоим состоянием",
+  "отделяю поддержку от советов",
+  "подбираю технику самопомощи",
+  "формулирую бережный следующий шаг",
+];
 
 const scriptedReplies = [
-  "Похоже, тревога сейчас пытается защитить тебя, но делает это слишком громко. Давай сначала снизим интенсивность, а уже потом будем разбираться.",
-  "Заметь, где это ощущается в теле: грудь, живот, горло, плечи. Не надо ничего исправлять, просто отметь место и силу от 1 до 10.",
-  "Попробуем технику 3-3-3: назови три предмета вокруг, три звука и три телесных ощущения. Это помогает мозгу вернуться в настоящий момент.",
-  "Теперь коротко запиши мысль, которая сильнее всего разгоняет тревогу. Потом спроси себя: какие факты за нее, а какие против?",
-  "Домашнее задание мягкое: сегодня один раз повтори технику 3-3-3 и отметь, на сколько пунктов изменилась тревога.",
+  "Я не буду спорить с твоей тревогой или уговаривать тебя «просто успокоиться». Давай сначала снизим громкость состояния: поставь обе стопы на пол и найди глазами три спокойных объекта рядом.",
+  "Теперь коротко: что тревога пытается предотвратить? Часто она звучит как защита, но выбирает слишком жёсткий способ. Мы можем поблагодарить её за сигнал и всё равно не отдавать ей руль.",
+  "Техника на минуту: вдох на 4, выдох на 6. На выдохе расслабь челюсть и плечи. Повтори 5 циклов. Цель не «убрать всё», а снизить интенсивность хотя бы на один пункт.",
+  "Если смотреть по КПТ, нам нужна мысль, которая разгоняет состояние. Запиши её одной фразой. Потом спросим: какие факты за неё, какие против, и какой более честный вариант звучит без самообмана.",
+  "Мягкое задание: сегодня выбери одно действие на 10 минут, которое поддерживает тебя, а не доказывает твою продуктивность. После отметь: стало легче, тяжелее или так же?",
 ];
 
 const programs = [
@@ -115,21 +311,43 @@ const programs = [
     caption: "короткие ежедневные шаги",
     progress: 42,
     icon: Wind,
-    days: ["Карта тревоги", "Дыхание 4-6", "Проверка мыслей", "Маленькое действие"],
+    tone: "lavender" as Tone,
+    goal: "снизить тревожный фон и вернуть чувство управляемости",
+    stats: ["7 дней", "10 мин/день", "3 техники"],
+    days: [
+      { title: "Карта тревоги", detail: "отмечаем триггеры, мысли и телесные сигналы" },
+      { title: "Дыхание 4-6", detail: "снижаем возбуждение нервной системы" },
+      { title: "Проверка мысли", detail: "ищем факты вместо прогнозов" },
+      { title: "Маленькое действие", detail: "возвращаем контроль через конкретный шаг" },
+    ],
   },
   {
     title: "Гигиена сна",
-    caption: "ритм, вечерний ритуал, разгрузка",
+    caption: "вечерний ритуал и разгрузка",
     progress: 18,
     icon: Moon,
-    days: ["Сонный дневник", "Тихий час", "Ритуал отключения"],
+    tone: "pink" as Tone,
+    goal: "не бороться со сном, а снижать вечернее напряжение",
+    stats: ["5 вечеров", "12 мин", "сонный дневник"],
+    days: [
+      { title: "Разгрузка головы", detail: "выносим мысли из кровати на бумагу" },
+      { title: "Тихий час", detail: "собираем мягкий переход ко сну" },
+      { title: "Если не уснулось", detail: "план без паники и самокритики" },
+    ],
   },
   {
     title: "Опора на себя",
     caption: "самооценка без жесткости",
     progress: 64,
     icon: Leaf,
-    days: ["Внутренний критик", "Факты обо мне", "Просьба о поддержке"],
+    tone: "green" as Tone,
+    goal: "ослабить внутреннего критика и собрать факты поддержки",
+    stats: ["6 шагов", "дневник", "границы"],
+    days: [
+      { title: "Голос критика", detail: "отделяем факт от нападения" },
+      { title: "Факты обо мне", detail: "собираем доказательства устойчивости" },
+      { title: "Просьба о поддержке", detail: "формулируем её без стыда" },
+    ],
   },
 ];
 
@@ -147,7 +365,7 @@ function makeMessage(role: Role, text: string): Message {
   return { id: `message-${messageCounter}`, role, text };
 }
 
-function haptic(style: "light" | "medium" = "light") {
+function haptic(style: "light" | "medium" | "heavy" = "light") {
   if (typeof window === "undefined") return;
   const telegram = (
     window as Window & {
@@ -162,18 +380,28 @@ function haptic(style: "light" | "medium" = "light") {
     }
   ).Telegram?.WebApp?.HapticFeedback;
   telegram?.impactOccurred?.(style);
-  if (!telegram && navigator.vibrate) navigator.vibrate(style === "medium" ? 18 : 8);
+  if (!telegram && navigator.vibrate) navigator.vibrate(style === "heavy" ? 22 : style === "medium" ? 14 : 7);
 }
 
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-function toneClasses(tone: ModuleOption["tone"]) {
+function toneClasses(tone: Tone) {
   return {
     lavender: "bg-[var(--lavender-soft)] text-[var(--lavender-deep)]",
     pink: "bg-[var(--pink-soft)] text-[var(--pink-deep)]",
     green: "bg-[var(--green-soft)] text-[var(--green-deep)]",
+    sun: "bg-[var(--sun-soft)] text-[var(--sun-deep)]",
+  }[tone];
+}
+
+function toneFill(tone: Tone) {
+  return {
+    lavender: "from-[var(--lavender)] to-[var(--pink)]",
+    pink: "from-[var(--pink)] to-[var(--sun)]",
+    green: "from-[var(--green)] to-[var(--lavender)]",
+    sun: "from-[var(--sun)] to-[var(--pink)]",
   }[tone];
 }
 
@@ -185,22 +413,24 @@ function AppButton({
 }: {
   children: React.ReactNode;
   onClick?: () => void;
-  variant?: "dark" | "soft" | "ghost";
+  variant?: "dark" | "soft" | "ghost" | "accent";
   className?: string;
 }) {
   return (
     <motion.button
       type="button"
-      whileTap={{ scale: 0.96 }}
+      whileTap={{ scale: 0.965 }}
+      whileHover={{ y: -1 }}
       onClick={() => {
         haptic("light");
         onClick?.();
       }}
       className={cx(
-        "inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 text-[15px] font-semibold transition",
+        "inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 text-[15px] font-bold transition focus:outline-none",
         variant === "dark" && "bg-[var(--ink)] text-white shadow-[0_18px_40px_rgba(17,17,17,0.14)]",
         variant === "soft" && "bg-white text-[var(--ink)] shadow-[0_12px_30px_rgba(17,17,17,0.07)]",
         variant === "ghost" && "bg-[var(--card)] text-[var(--ink)]",
+        variant === "accent" && "bg-[var(--lavender)] text-[var(--ink)] shadow-[0_16px_38px_rgba(122,103,224,0.2)]",
         className,
       )}
     >
@@ -213,41 +443,74 @@ function ScreenShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[var(--page)] text-[var(--ink)] sm:flex sm:items-center sm:justify-center sm:p-6">
       <div className="relative mx-auto flex h-[100svh] w-full max-w-[430px] overflow-hidden bg-[var(--app)] shadow-2xl sm:h-[calc(100svh-48px)] sm:max-h-[844px] sm:rounded-[42px] sm:border sm:border-black/10">
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-16 bg-gradient-to-b from-[var(--app)] via-[var(--app)]/80 to-transparent" />
-        <div className="pointer-events-none absolute -right-16 top-16 h-44 w-44 rounded-full bg-[var(--lavender)]/25 blur-3xl" />
-        <div className="pointer-events-none absolute -left-16 top-56 h-36 w-36 rounded-full bg-[var(--pink)]/20 blur-3xl" />
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col">{children}</div>
+        <div className="pointer-events-none absolute -right-20 top-12 h-48 w-48 rounded-full bg-[var(--lavender)]/24 blur-3xl" />
+        <div className="pointer-events-none absolute -left-24 top-72 h-44 w-44 rounded-full bg-[var(--pink)]/18 blur-3xl" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-14 bg-gradient-to-b from-[var(--app)]/90 to-transparent" />
+        <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
       </div>
     </div>
   );
 }
 
-function TopBar({ compact = false }: { compact?: boolean }) {
+function TopBar({ label = "AI-психолог · Mini App" }: { label?: string }) {
   return (
-    <div className="relative z-30 flex items-center justify-between px-5 pb-1 pt-[max(14px,env(safe-area-inset-top))] text-xs font-semibold text-black/55">
+    <div className="relative z-30 flex items-center justify-between px-5 pb-1 pt-[max(14px,env(safe-area-inset-top))] text-xs font-bold text-black/55">
       <span>9:41</span>
-      <span className={cx("rounded-full bg-white/80 px-3 py-1 shadow-sm", compact && "bg-[var(--card)]")}>
-        AI-психолог · Mini App
-      </span>
+      <span className="rounded-full bg-white/86 px-3 py-1 shadow-[0_8px_22px_rgba(17,17,17,0.06)]">{label}</span>
     </div>
   );
 }
 
-function FloatingMotes() {
+function MotionGlyph({ icon: Icon, tone, active = false }: { icon: LucideIcon; tone: Tone; active?: boolean }) {
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {[0, 1, 2, 3, 4].map((i) => (
+    <motion.div
+      animate={active ? { y: [0, -5, 0], rotate: [0, -2, 2, 0] } : { y: [0, -3, 0] }}
+      transition={{ duration: active ? 2.8 : 4, repeat: Infinity, ease: "easeInOut" }}
+      className={cx(
+        "relative flex h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-white shadow-[0_16px_42px_rgba(17,17,17,0.08)]",
+      )}
+    >
+      <motion.span
+        animate={{ scale: active ? [1, 1.12, 1] : [1, 1.06, 1], opacity: [0.6, 0.9, 0.6] }}
+        transition={{ duration: 2.4, repeat: Infinity }}
+        className={cx("absolute inset-3 rounded-[18px]", toneClasses(tone))}
+      />
+      <Icon className="relative" size={28} strokeWidth={1.9} />
+      <span className={cx("absolute -right-1 top-2 h-4 w-4 rounded-full bg-gradient-to-br", toneFill(tone))} />
+    </motion.div>
+  );
+}
+
+function VoiceOrb({ thinking = false, small = false }: { thinking?: boolean; small?: boolean }) {
+  const size = small ? "h-20 w-20" : "h-28 w-28";
+  return (
+    <div className={cx("relative flex items-center justify-center", size)}>
+      {[0, 1, 2].map((ring) => (
         <motion.span
-          key={i}
-          animate={{ y: [0, -14, 0], opacity: [0.35, 0.75, 0.35] }}
-          transition={{ duration: 3.2 + i * 0.45, repeat: Infinity, ease: "easeInOut" }}
+          key={ring}
+          animate={{
+            scale: thinking ? [0.78, 1.12 + ring * 0.08, 0.82] : [0.9, 1.02 + ring * 0.03, 0.9],
+            opacity: thinking ? [0.55, 0.22, 0.48] : [0.32, 0.16, 0.32],
+            rotate: [0, ring % 2 ? -18 : 18, 0],
+          }}
+          transition={{ duration: thinking ? 1.8 + ring * 0.22 : 4.5 + ring, repeat: Infinity, ease: "easeInOut" }}
           className={cx(
-            "absolute h-2 w-2 rounded-full",
-            i % 2 ? "bg-[var(--pink)]" : "bg-[var(--lavender)]",
+            "absolute rounded-[36%] blur-[1px]",
+            size,
+            ring === 0 && "bg-[var(--lavender)]",
+            ring === 1 && "bg-[var(--pink)]",
+            ring === 2 && "bg-[var(--green)]",
           )}
-          style={{ left: `${18 + i * 17}%`, top: `${18 + i * 11}%` }}
         />
       ))}
+      <motion.span
+        animate={{ scale: thinking ? [1, 0.92, 1.05, 1] : [1, 1.04, 1] }}
+        transition={{ duration: thinking ? 1.15 : 3.2, repeat: Infinity }}
+        className={cx(
+          "relative rounded-[32%] bg-white/85 shadow-[0_22px_70px_rgba(122,103,224,0.18)]",
+          small ? "h-11 w-11" : "h-16 w-16",
+        )}
+      />
     </div>
   );
 }
@@ -265,17 +528,16 @@ function OnboardingScreen({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="relative flex h-full flex-col px-6 pb-7">
+    <div className="relative flex h-full flex-col px-6 pb-6">
       <TopBar />
-      <FloatingMotes />
-      <div className="flex flex-1 flex-col items-center justify-center text-center">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={item.title}
             initial={{ opacity: 0, y: 28, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -24, scale: 0.98 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
+            transition={{ duration: 0.34, ease: "easeOut" }}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             onDragEnd={(_, info) => {
@@ -287,23 +549,14 @@ function OnboardingScreen({ onDone }: { onDone: () => void }) {
             }}
             className="flex flex-col items-center"
           >
-            <motion.div
-              animate={{ rotate: [0, -3, 3, 0], y: [0, -4, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="relative mb-8 flex h-32 w-32 items-center justify-center rounded-[38px] bg-white shadow-[0_22px_60px_rgba(120,103,224,0.18)]"
-            >
-              <div className="absolute inset-4 rounded-[30px] bg-[var(--lavender-soft)]" />
-              <Icon className="relative text-[var(--lavender-deep)]" size={48} strokeWidth={1.8} />
-              <motion.span
-                animate={{ scale: [1, 1.18, 1] }}
-                transition={{ duration: 2.2, repeat: Infinity }}
-                className="absolute -right-2 top-4 h-7 w-7 rounded-full bg-[var(--pink)]"
-              />
-            </motion.div>
-            <h1 className="max-w-[330px] text-[34px] font-black leading-[0.98] tracking-[-0.04em]">
-              {item.title}
-            </h1>
-            <p className="mt-5 max-w-[320px] text-[15px] leading-relaxed text-[var(--muted)]">{item.text}</p>
+            <div className="mb-8">
+              {step === 0 ? <VoiceOrb /> : <MotionGlyph icon={Icon} tone={step === 1 ? "green" : step === 2 ? "pink" : "lavender"} active />}
+            </div>
+            <p className="mb-3 rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-[var(--lavender-deep)] shadow-sm">
+              не ChatGPT в другой обложке
+            </p>
+            <h1 className="max-w-[340px] text-[31px] font-black leading-[1.02] tracking-[-0.035em]">{item.title}</h1>
+            <p className="mt-5 max-w-[330px] text-[15px] leading-relaxed text-[var(--muted)]">{item.text}</p>
           </motion.div>
         </AnimatePresence>
       </div>
@@ -312,13 +565,13 @@ function OnboardingScreen({ onDone }: { onDone: () => void }) {
           {onboarding.map((entry, index) => (
             <motion.span
               key={entry.title}
-              animate={{ width: index === step ? 28 : 8, opacity: index === step ? 1 : 0.28 }}
+              animate={{ width: index === step ? 30 : 8, opacity: index === step ? 1 : 0.25 }}
               className="h-2 rounded-full bg-[var(--lavender-deep)]"
             />
           ))}
         </div>
         <AppButton onClick={next} className="w-full">
-          {isLast ? "Начать" : "Далее"}
+          {isLast ? "Собрать ассистента" : "Дальше"}
           <ChevronRight size={18} />
         </AppButton>
       </div>
@@ -326,61 +579,169 @@ function OnboardingScreen({ onDone }: { onDone: () => void }) {
   );
 }
 
-function ModuleScreen({ onSelect }: { onSelect: (module: ModuleOption) => void }) {
+function IntakeScreen({
+  answers,
+  onAnswer,
+  onDone,
+}: {
+  answers: Record<string, string>;
+  onAnswer: (id: string, value: string) => void;
+  onDone: () => void;
+}) {
+  const [step, setStep] = useState(0);
+  const question = intakeQuestions[step];
+  const selected = answers[question.id];
+  const isLast = step === intakeQuestions.length - 1;
+  const progress = ((step + 1) / intakeQuestions.length) * 100;
+
+  function next() {
+    if (!selected) return;
+    haptic("medium");
+    if (isLast) onDone();
+    else setStep((value) => value + 1);
+  }
+
   return (
-    <div className="flex h-full flex-col px-5 pb-5">
-      <TopBar compact />
+    <div className="flex h-full min-w-0 flex-col px-5 pb-5">
+      <TopBar label="настройка ассистента" />
       <div className="mt-4">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--lavender-deep)]">
-          Шаг 1 из 2 · всё бесплатно
-        </p>
-        <h1 className="mt-3 text-[32px] font-black leading-none tracking-[-0.04em]">
-          С чем хочешь поработать?
-        </h1>
+        <div className="h-2 overflow-hidden rounded-full bg-black/5">
+          <motion.div className="h-full rounded-full bg-[var(--ink)]" animate={{ width: `${progress}%` }} />
+        </div>
+        <p className="mt-4 text-xs font-black uppercase tracking-[0.14em] text-[var(--lavender-deep)]">{question.eyebrow}</p>
+        <h1 className="mt-2 text-[29px] font-black leading-[1.04] tracking-[-0.035em]">{question.title}</h1>
+        <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">{question.subtitle}</p>
+      </div>
+      <div className="mt-5 min-h-0 flex-1 space-y-3 overflow-y-auto pb-2">
+        <AnimatePresence mode="popLayout">
+          {question.options.map((option, index) => {
+            const Icon = option.icon;
+            const active = selected === option.value;
+            return (
+              <motion.button
+                key={option.value}
+                type="button"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ delay: index * 0.04 }}
+                whileTap={{ scale: 0.985 }}
+                onClick={() => {
+                  haptic("light");
+                  onAnswer(question.id, option.value);
+                }}
+                className={cx(
+                  "flex w-full items-start gap-3 rounded-[26px] border p-4 text-left transition",
+                  active ? "border-[var(--ink)] bg-white shadow-[0_18px_38px_rgba(17,17,17,0.08)]" : "border-transparent bg-white/72",
+                )}
+              >
+                <span className={cx("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl", active ? "bg-[var(--lavender-soft)] text-[var(--lavender-deep)]" : "bg-[var(--card)] text-black/45")}>
+                  <Icon size={22} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[16px] font-black tracking-[-0.02em]">{option.label}</span>
+                  <span className="mt-1 block text-[13px] leading-relaxed text-[var(--muted)]">{option.detail}</span>
+                </span>
+                {active && <BadgeCheck className="mt-1 text-[var(--green-deep)]" size={20} />}
+              </motion.button>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+      <div className="flex gap-2">
+        {step > 0 && (
+          <AppButton variant="ghost" onClick={() => setStep((value) => value - 1)} className="w-14 px-0">
+            <ChevronLeft size={18} />
+          </AppButton>
+        )}
+        <AppButton onClick={next} className="flex-1" variant={selected ? "dark" : "ghost"}>
+          {isLast ? "Показать подходы" : "Продолжить"}
+          <ChevronRight size={18} />
+        </AppButton>
+      </div>
+    </div>
+  );
+}
+
+function ModuleScreen({ onSelect, answers }: { onSelect: (module: ModuleOption) => void; answers: Record<string, string> }) {
+  const recommendedIndex = Math.max(0, modules.findIndex((module) => module.id === answers.state));
+  const [activeIndex, setActiveIndex] = useState(recommendedIndex);
+  const active = modules[activeIndex] ?? modules[0];
+  const ActiveIcon = active.icon;
+
+  return (
+    <div className="flex h-full min-w-0 flex-col px-5 pb-5">
+      <TopBar label="конструктор" />
+      <div className="mt-4">
+        <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--lavender-deep)]">персональная сборка</p>
+        <h1 className="mt-2 text-[30px] font-black leading-[1.02] tracking-[-0.035em]">Выбери фокус работы</h1>
         <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
-          Все модули открыты для демо, чтобы перейти к основным окнам без paywall.
+          Мы уже учли ответы анкеты. Можно взять рекомендацию или пролистать другие направления.
         </p>
       </div>
-      <div className="mt-5 grid flex-1 grid-cols-2 gap-3 overflow-y-auto pb-2">
+      <div className="mt-5 flex min-w-0 gap-3 overflow-x-auto pb-2">
         {modules.map((module, index) => {
           const Icon = module.icon;
+          const selected = index === activeIndex;
           return (
             <motion.button
               key={module.id}
               type="button"
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.035 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => {
                 haptic("light");
-                onSelect(module);
+                setActiveIndex(index);
               }}
-              className="group relative flex min-h-[142px] flex-col justify-between overflow-hidden rounded-[26px] bg-white p-4 text-left shadow-[0_12px_30px_rgba(17,17,17,0.06)]"
+              className={cx(
+                "w-[132px] shrink-0 rounded-[28px] border p-3 text-left transition",
+                selected ? "border-[var(--ink)] bg-white shadow-[0_16px_38px_rgba(17,17,17,0.08)]" : "border-transparent bg-white/60",
+              )}
             >
-              <motion.span
-                animate={{ x: [0, 6, 0], y: [0, -5, 0] }}
-                transition={{ duration: 3.4, repeat: Infinity, delay: index * 0.2 }}
-                className={cx("absolute -right-5 -top-5 h-20 w-20 rounded-full opacity-60", toneClasses(module.tone))}
-              />
-              <span className="relative flex items-start justify-between">
-                <span className={cx("flex h-11 w-11 items-center justify-center rounded-2xl", toneClasses(module.tone))}>
-                  <Icon size={22} strokeWidth={1.9} />
-                </span>
-                <span className="rounded-full bg-[var(--green-soft)] px-2 py-1 text-[10px] font-black uppercase text-[var(--green-deep)]">
-                  free
-                </span>
+              <span className={cx("mb-4 flex h-12 w-12 items-center justify-center rounded-2xl", toneClasses(module.tone))}>
+                <Icon size={22} />
               </span>
-              <span className="relative">
-                <span className="block text-[16px] font-extrabold leading-tight tracking-[-0.02em]">
-                  {module.title}
-                </span>
-                <span className="mt-1 block text-xs text-[var(--muted)]">{module.caption}</span>
-              </span>
+              <span className="block text-[15px] font-black leading-tight">{module.title}</span>
+              <span className="mt-1 block text-[11px] text-[var(--muted)]">{module.caption}</span>
             </motion.button>
           );
         })}
       </div>
+      <motion.div
+        key={active.id}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-3 min-h-0 flex-1 overflow-hidden rounded-[34px] bg-white p-5 shadow-[0_18px_42px_rgba(17,17,17,0.07)]"
+      >
+        <div className="flex items-start gap-4">
+          <MotionGlyph icon={ActiveIcon} tone={active.tone} active />
+          <div className="min-w-0">
+            <p className="text-xl font-black tracking-[-0.03em]">{active.title}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{active.description}</p>
+          </div>
+        </div>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {active.tags.map((tag) => (
+            <span key={tag} className="rounded-full bg-[var(--card)] px-3 py-1.5 text-[11px] font-bold text-black/55">
+              {tag}
+            </span>
+          ))}
+        </div>
+        <div className="mt-5 space-y-2">
+          {active.outcomes.map((outcome) => (
+            <div key={outcome} className="flex items-center gap-2 text-sm font-bold">
+              <Check className="text-[var(--green-deep)]" size={16} />
+              {outcome}
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 rounded-[22px] bg-[var(--app)] p-4 text-[13px] leading-relaxed text-black/62">
+          {active.prompt}
+        </div>
+      </motion.div>
+      <AppButton onClick={() => onSelect(active)} className="mt-4 w-full">
+        Выбрать направление
+        <ChevronRight size={18} />
+      </AppButton>
     </div>
   );
 }
@@ -394,71 +755,136 @@ function MethodScreen({
   onBack: () => void;
   onSelect: (method: MethodOption) => void;
 }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const active = methods[activeIndex];
+  const ActiveIcon = active.icon;
+
   return (
     <div className="flex h-full flex-col px-5 pb-5">
-      <TopBar compact />
-      <div className="mt-4">
+      <TopBar label={module.title} />
+      <div className="mt-3 flex items-center justify-between">
         <button
           type="button"
-          onClick={onBack}
-          className="mb-4 rounded-full bg-[var(--card)] px-4 py-2 text-sm font-semibold"
+          onClick={() => {
+            haptic("light");
+            onBack();
+          }}
+          className="rounded-full bg-[var(--card)] px-4 py-2 text-sm font-bold"
         >
           Назад
         </button>
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--lavender-deep)]">
-          {module.title} · шаг 2 из 2
-        </p>
-        <h1 className="mt-3 text-[32px] font-black leading-none tracking-[-0.04em]">Выбери подход</h1>
-        <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
-          Для прототипа доступны все форматы работы. Выбор меняет тон чата и упражнения.
-        </p>
+        <span className="rounded-full bg-[var(--green-soft)] px-3 py-1 text-[11px] font-black text-[var(--green-deep)]">
+          всё открыто
+        </span>
       </div>
-      <div className="mt-5 flex-1 space-y-3 overflow-y-auto pb-2">
+      <h1 className="mt-4 text-[30px] font-black leading-none tracking-[-0.035em]">Как будем работать?</h1>
+      <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
+        Не просто список школ: каждый подход меняет вопросы, тон и тип упражнений.
+      </p>
+      <div className="mt-5 flex min-w-0 gap-3 overflow-x-auto pb-3">
         {methods.map((method, index) => {
           const Icon = method.icon;
+          const selected = index === activeIndex;
           return (
             <motion.button
               key={method.id}
               type="button"
-              initial={{ opacity: 0, x: 18 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.035 }}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.965 }}
               onClick={() => {
-                haptic("medium");
-                onSelect(method);
+                haptic("light");
+                setActiveIndex(index);
               }}
-              className="flex w-full items-center gap-3 rounded-[24px] bg-white p-4 text-left shadow-[0_12px_30px_rgba(17,17,17,0.055)]"
+              className={cx(
+                "w-[188px] shrink-0 rounded-[30px] border p-4 text-left transition",
+                selected ? "border-[var(--ink)] bg-white shadow-[0_18px_42px_rgba(17,17,17,0.08)]" : "border-transparent bg-white/62",
+              )}
             >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--lavender-soft)] text-[var(--lavender-deep)]">
-                <Icon size={22} strokeWidth={1.9} />
+              <span className={cx("mb-4 flex h-12 w-12 items-center justify-center rounded-2xl", toneClasses(method.tone))}>
+                <Icon size={22} />
               </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[16px] font-extrabold tracking-[-0.02em]">{method.title}</span>
-                <span className="mt-0.5 block truncate text-xs text-[var(--muted)]">{method.caption}</span>
-              </span>
-              <BadgeCheck className="text-[var(--green-deep)]" size={20} />
+              <span className="block text-[17px] font-black tracking-[-0.02em]">{method.title}</span>
+              <span className="mt-1 block text-xs leading-relaxed text-[var(--muted)]">{method.caption}</span>
             </motion.button>
           );
         })}
       </div>
+      <motion.div
+        key={active.id}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="min-h-0 flex-1 overflow-y-auto rounded-[34px] bg-white p-5 shadow-[0_18px_42px_rgba(17,17,17,0.07)]"
+      >
+        <div className="flex items-start gap-4">
+          <MotionGlyph icon={ActiveIcon} tone={active.tone} active />
+          <div>
+            <p className="text-xl font-black tracking-[-0.03em]">{active.title}</p>
+            <p className="mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[var(--lavender-deep)]">
+              лучше всего: {active.bestFor}
+            </p>
+          </div>
+        </div>
+        <p className="mt-5 text-sm leading-relaxed text-[var(--muted)]">{active.howWorks}</p>
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          {active.flow.map((step, index) => (
+            <div key={step} className="rounded-[18px] bg-[var(--app)] p-3">
+              <span className="text-[11px] font-black text-black/35">0{index + 1}</span>
+              <p className="mt-1 text-xs font-bold leading-snug">{step}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 rounded-[22px] bg-[var(--lavender-soft)] p-4">
+          <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--lavender-deep)]">первый вопрос</p>
+          <p className="mt-2 text-sm font-bold leading-relaxed">{active.question}</p>
+        </div>
+      </motion.div>
+      <AppButton onClick={() => onSelect(active)} className="mt-4 w-full">
+        Собрать чат
+        <Sparkles size={18} />
+      </AppButton>
     </div>
   );
 }
 
-function TypingIndicator() {
+function ThinkingPanel({ thinking }: { thinking: boolean }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex justify-start">
-      <div className="flex items-center gap-1 rounded-[22px] bg-[var(--card)] px-4 py-3">
-        {[0, 1, 2].map((dot) => (
-          <motion.span
-            key={dot}
-            animate={{ y: [0, -5, 0], opacity: [0.35, 1, 0.35] }}
-            transition={{ duration: 0.9, repeat: Infinity, delay: dot * 0.14 }}
-            className="h-1.5 w-1.5 rounded-full bg-black/45"
-          />
-        ))}
+    <motion.div
+      animate={{ opacity: thinking ? 1 : 0.84 }}
+      className="rounded-[30px] bg-white/84 p-4 shadow-[0_18px_42px_rgba(17,17,17,0.07)]"
+    >
+      <div className="flex items-center gap-4">
+        <VoiceOrb thinking={thinking} small />
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-black tracking-[-0.02em]">{thinking ? "Ассистент думает" : "Готов к диалогу"}</p>
+          <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
+            {thinking ? "анализирует состояние, не торопится с советом" : "сначала поддержка, потом техника"}
+          </p>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-black/5">
+            <motion.div
+              animate={{ x: thinking ? ["-20%", "120%"] : "0%" }}
+              transition={{ duration: 1.4, repeat: thinking ? Infinity : 0, ease: "easeInOut" }}
+              className="h-full w-1/2 rounded-full bg-gradient-to-r from-[var(--lavender)] via-[var(--pink)] to-[var(--green)]"
+            />
+          </div>
+        </div>
       </div>
+      <AnimatePresence>
+        {thinking && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {thinkingLines.map((line, index) => (
+                <motion.div
+                  key={line}
+                  animate={{ opacity: [0.35, 1, 0.35] }}
+                  transition={{ duration: 1.4, repeat: Infinity, delay: index * 0.18 }}
+                  className="rounded-full bg-[var(--app)] px-3 py-2 text-[11px] font-bold text-black/55"
+                >
+                  {line}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -477,42 +903,42 @@ function ChatScreen({
   const [messages, setMessages] = useState<Message[]>([
     makeMessage(
       "assistant",
-      `Привет. Мы выбрали "${module.title}" и подход "${method.title}". Я рядом. Расскажи, что сейчас происходит?`,
+      `Я рядом. Судя по настройке, фокус — «${module.title}», подход — «${method.title}». Начнём не с советов, а с понимания: что сейчас самое тяжёлое?`,
     ),
   ]);
   const [input, setInput] = useState("");
   const [replyIndex, setReplyIndex] = useState(0);
-  const [typing, setTyping] = useState(false);
+  const [thinking, setThinking] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, typing]);
+  }, [messages, thinking]);
 
   function send(text: string) {
     const content = text.trim();
-    if (!content || typing) return;
+    if (!content || thinking) return;
     haptic("light");
     setInput("");
     setMessages((current) => [...current, makeMessage("user", content)]);
-    setTyping(true);
+    setThinking(true);
     window.setTimeout(() => {
       setMessages((current) => [...current, makeMessage("assistant", scriptedReplies[replyIndex % scriptedReplies.length])]);
       setReplyIndex((value) => value + 1);
-      setTyping(false);
+      setThinking(false);
       haptic("medium");
-    }, 850);
+    }, 1500);
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <header className="border-b border-black/5 bg-white/70 px-5 pb-3 pt-4 backdrop-blur">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[17px] font-extrabold tracking-[-0.03em]">
+    <div className="flex h-full min-h-0 min-w-0 flex-col">
+      <header className="shrink-0 border-b border-black/5 bg-[var(--app)]/90 px-4 pb-3 pt-3 backdrop-blur">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="min-w-0">
+            <p className="truncate text-[16px] font-black tracking-[-0.025em]">
               {module.title} · {method.title}
             </p>
-            <p className="mt-0.5 text-xs text-[var(--green-deep)]">Demo Free · без ограничений</p>
+            <p className="text-[11px] font-bold text-[var(--green-deep)]">персональный сценарий · free</p>
           </div>
           <button
             type="button"
@@ -520,44 +946,38 @@ function ChatScreen({
               haptic("light");
               onReset();
             }}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--card)]"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white"
             aria-label="Сбросить выбор"
           >
-            <RotateCcw size={17} />
+            <RotateCcw size={16} />
           </button>
         </div>
+        <ThinkingPanel thinking={thinking} />
       </header>
-      <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
         {messages.map((message) => (
           <motion.div
             key={message.id}
-            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+            initial={{ opacity: 0, y: 10, scale: 0.985 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             className={cx("flex", message.role === "user" ? "justify-end" : "justify-start")}
           >
             <div
               className={cx(
-                "max-w-[82%] rounded-[24px] px-4 py-3 text-[14px] leading-relaxed",
+                "max-w-[84%] rounded-[24px] px-4 py-3 text-[13.5px] leading-relaxed shadow-sm",
                 message.role === "user"
-                  ? "bg-[var(--lavender)] text-[var(--ink)]"
-                  : "bg-[var(--card)] text-[var(--ink)]",
+                  ? "bg-[var(--ink)] text-white"
+                  : "bg-white text-[var(--ink)]",
               )}
             >
               {message.text}
             </div>
           </motion.div>
         ))}
-        <AnimatePresence>{typing && <TypingIndicator />}</AnimatePresence>
         {messages.length > 5 && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-[24px] bg-[var(--pink-soft)] p-4"
-          >
-            <p className="text-sm font-extrabold">Premium доступен как демо</p>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-              Ничего не блокируем: можно открыть экран подписки и вернуться в чат.
-            </p>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-[24px] bg-[var(--pink-soft)] p-4">
+            <p className="text-sm font-black">Premium пока только демонстрация</p>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">Путь не блокируется. Можно посмотреть экран монетизации и вернуться.</p>
             <AppButton variant="soft" onClick={onPremium} className="mt-3 w-full">
               Посмотреть Premium
             </AppButton>
@@ -565,15 +985,15 @@ function ChatScreen({
         )}
         <div ref={bottomRef} />
       </div>
-      <div className="border-t border-black/5 bg-white/85 px-4 pb-[max(10px,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-        <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
+      <div className="shrink-0 border-t border-black/5 bg-white/90 px-4 pb-[max(10px,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+        <div className="mb-2 flex min-w-0 gap-2 overflow-x-auto pb-1">
           {quickPrompts.map((prompt) => (
             <motion.button
               key={prompt}
               type="button"
               whileTap={{ scale: 0.96 }}
               onClick={() => send(prompt)}
-              className="shrink-0 rounded-full bg-[var(--card)] px-4 py-2 text-xs font-semibold"
+              className="shrink-0 rounded-full bg-[var(--card)] px-3.5 py-2 text-[11px] font-bold"
             >
               {prompt}
             </motion.button>
@@ -584,18 +1004,82 @@ function ChatScreen({
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => event.key === "Enter" && send(input)}
-            placeholder="Напиши, что чувствуешь..."
-            className="min-h-12 flex-1 rounded-full bg-[var(--card)] px-4 text-sm outline-none placeholder:text-black/35"
+            placeholder="Напиши коротко..."
+            className="h-11 min-w-0 flex-1 rounded-full bg-[var(--card)] px-4 text-sm outline-none placeholder:text-black/35"
           />
           <motion.button
             type="button"
             whileTap={{ scale: 0.9 }}
             onClick={() => send(input)}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] text-white"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] text-white"
             aria-label="Отправить"
           >
-            <Send size={18} />
+            <Send size={17} />
           </motion.button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MeditationTimer() {
+  const [running, setRunning] = useState(false);
+  const [seconds, setSeconds] = useState(180);
+  const progress = ((180 - seconds) / 180) * 100;
+
+  useEffect(() => {
+    if (!running) return;
+    const id = window.setInterval(() => {
+      setSeconds((value) => {
+        if (value <= 1) {
+          setRunning(false);
+          haptic("heavy");
+          return 180;
+        }
+        return value - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [running]);
+
+  const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
+  const rest = (seconds % 60).toString().padStart(2, "0");
+
+  return (
+    <div className="relative overflow-hidden rounded-[34px] bg-[var(--ink)] p-5 text-white shadow-[0_20px_46px_rgba(17,17,17,0.18)]">
+      <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[var(--lavender)]/50 blur-2xl" />
+      <div className="absolute -bottom-12 left-8 h-32 w-32 rounded-full bg-[var(--pink)]/35 blur-2xl" />
+      <div className="relative flex items-center gap-4">
+        <div className="relative flex h-24 w-24 items-center justify-center">
+          <motion.div
+            animate={{ scale: running ? [1, 1.12, 1] : [1, 1.04, 1] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 rounded-full bg-white/12"
+          />
+          <div
+            className="absolute inset-1 rounded-full"
+            style={{ background: `conic-gradient(var(--lavender) ${progress}%, rgba(255,255,255,.16) ${progress}%)` }}
+          />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[var(--ink)] text-lg font-black">
+            {minutes}:{rest}
+          </div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xl font-black tracking-[-0.03em]">3 минуты тишины</p>
+          <p className="mt-2 text-xs leading-relaxed text-white/68">
+            Дыхание 4-6, мягкий фокус на теле, без требования «успокоиться идеально».
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              haptic("medium");
+              setRunning((value) => !value);
+            }}
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-black text-[var(--ink)]"
+          >
+            {running ? <Pause size={14} /> : <Play size={14} />}
+            {running ? "Пауза" : "Начать"}
+          </button>
         </div>
       </div>
     </div>
@@ -606,57 +1090,61 @@ function ProgramsScreen({ onPremium }: { onPremium: () => void }) {
   const [opened, setOpened] = useState<(typeof programs)[number] | null>(null);
 
   return (
-    <div className="relative h-full overflow-hidden">
-      <div className="flex h-full flex-col px-5 pb-5 pt-4">
-        <h1 className="text-[32px] font-black leading-none tracking-[-0.04em]">Программы</h1>
-        <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
-          Все курсы открыты: короткие ежедневные шаги, прогресс и упражнения.
+    <div className="relative h-full min-w-0 overflow-hidden">
+      <div className="flex h-full min-w-0 flex-col px-5 pb-5 pt-4">
+        <h1 className="text-[30px] font-black leading-none tracking-[-0.035em]">Практики</h1>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
+          Не библиотека карточек, а конкретные сценарии: что делать, сколько времени и зачем.
         </p>
-        <div className="mt-5 flex-1 space-y-3 overflow-y-auto pb-2">
-          {programs.map((program, index) => {
-            const Icon = program.icon;
-            return (
-              <motion.button
-                key={program.title}
-                type="button"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.04 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  haptic("light");
-                  setOpened(program);
-                }}
-                className="w-full rounded-[26px] bg-white p-4 text-left shadow-[0_12px_30px_rgba(17,17,17,0.055)]"
-              >
-                <div className="flex items-start gap-3">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--lavender-soft)] text-[var(--lavender-deep)]">
-                    <Icon size={22} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[16px] font-extrabold tracking-[-0.02em]">{program.title}</span>
-                    <span className="mt-1 block text-xs text-[var(--muted)]">{program.caption}</span>
-                  </span>
-                  <span className="rounded-full bg-[var(--green-soft)] px-2 py-1 text-[10px] font-black uppercase text-[var(--green-deep)]">
-                    open
-                  </span>
-                </div>
-                <div className="mt-4 flex items-center gap-3">
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--card)]">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${program.progress}%` }}
-                      className="h-full rounded-full bg-[var(--lavender-deep)]"
-                    />
+        <div className="mt-4 min-h-0 flex-1 overflow-y-auto pb-2">
+          <MeditationTimer />
+          <div className="mt-4 space-y-3">
+            {programs.map((program, index) => {
+              const Icon = program.icon;
+              return (
+                <motion.button
+                  key={program.title}
+                  type="button"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.04 }}
+                  whileTap={{ scale: 0.985 }}
+                  onClick={() => {
+                    haptic("light");
+                    setOpened(program);
+                  }}
+                  className="w-full rounded-[28px] bg-white p-4 text-left shadow-[0_12px_30px_rgba(17,17,17,0.055)]"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className={cx("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl", toneClasses(program.tone))}>
+                      <Icon size={22} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[16px] font-black tracking-[-0.02em]">{program.title}</span>
+                      <span className="mt-1 block text-xs text-[var(--muted)]">{program.caption}</span>
+                    </span>
+                    <ChevronRight className="text-black/25" size={18} />
                   </div>
-                  <span className="text-xs font-bold text-black/45">{program.progress}%</span>
-                </div>
-              </motion.button>
-            );
-          })}
-          <AppButton variant="ghost" onClick={onPremium} className="w-full">
-            Посмотреть Premium-demo
-          </AppButton>
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    {program.stats.map((stat) => (
+                      <div key={stat} className="rounded-[16px] bg-[var(--app)] px-2 py-2 text-center text-[10px] font-black text-black/55">
+                        {stat}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex items-center gap-3">
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-[var(--card)]">
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${program.progress}%` }} className="h-full rounded-full bg-[var(--lavender-deep)]" />
+                    </div>
+                    <span className="text-xs font-black text-black/45">{program.progress}%</span>
+                  </div>
+                </motion.button>
+              );
+            })}
+            <AppButton variant="ghost" onClick={onPremium} className="w-full">
+              Посмотреть Premium-demo
+            </AppButton>
+          </div>
         </div>
       </div>
       <AnimatePresence>
@@ -671,19 +1159,32 @@ function ProgramsScreen({ onPremium }: { onPremium: () => void }) {
             <button
               type="button"
               onClick={() => setOpened(null)}
-              className="mb-5 w-fit rounded-full bg-[var(--card)] px-4 py-2 text-sm font-semibold"
+              className="mb-4 w-fit rounded-full bg-[var(--card)] px-4 py-2 text-sm font-bold"
             >
               Назад
             </button>
-            <h2 className="text-[30px] font-black leading-none tracking-[-0.04em]">{opened.title}</h2>
-            <p className="mt-3 text-sm text-[var(--muted)]">{opened.caption}</p>
-            <div className="mt-6 space-y-3">
+            <h2 className="text-[29px] font-black leading-none tracking-[-0.035em]">{opened.title}</h2>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">{opened.goal}</p>
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              {opened.stats.map((stat) => (
+                <div key={stat} className="rounded-[18px] bg-white p-3 text-center">
+                  <BarChart3 className="mx-auto mb-2 text-[var(--lavender-deep)]" size={16} />
+                  <p className="text-[10px] font-black text-black/55">{stat}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 min-h-0 flex-1 space-y-3 overflow-y-auto pb-2">
               {opened.days.map((day, index) => (
-                <div key={day} className="flex items-center gap-3 rounded-[22px] bg-white p-4">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--green-soft)] text-xs font-black text-[var(--green-deep)]">
-                    {index + 1}
-                  </span>
-                  <span className="text-sm font-semibold">{day}</span>
+                <div key={day.title} className="rounded-[24px] bg-white p-4 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--green-soft)] text-xs font-black text-[var(--green-deep)]">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-black">{day.title}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">{day.detail}</p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -709,45 +1210,30 @@ function PremiumScreen({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="relative flex h-full flex-col px-5 pb-6 pt-5">
-      <button
-        type="button"
-        onClick={onClose}
-        className="ml-auto flex h-10 w-10 items-center justify-center rounded-full bg-[var(--card)]"
-        aria-label="Закрыть"
-      >
-        <ChevronRight className="rotate-180" size={18} />
+      <button type="button" onClick={onClose} className="ml-auto flex h-10 w-10 items-center justify-center rounded-full bg-[var(--card)]" aria-label="Закрыть">
+        <ChevronLeft size={18} />
       </button>
       <div className="mt-5 text-center">
-        <motion.div
-          animate={{ rotate: [0, 4, -4, 0], scale: [1, 1.03, 1] }}
-          transition={{ duration: 3.5, repeat: Infinity }}
-          className="mx-auto flex h-24 w-24 items-center justify-center rounded-[32px] bg-[var(--lavender-soft)] text-[var(--lavender-deep)]"
-        >
-          <Sparkles size={42} />
-        </motion.div>
-        <h1 className="mt-6 text-[34px] font-black leading-none tracking-[-0.04em]">Premium</h1>
-        <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
-          Это демо-монетизация. Все форматы уже открыты, оплата не выполняется.
-        </p>
+        <VoiceOrb />
+        <h1 className="mt-6 text-[34px] font-black leading-none tracking-[-0.035em]">Premium</h1>
+        <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">Демо-монетизация. Все форматы уже открыты, оплата не выполняется.</p>
       </div>
       <div className="mt-6 space-y-2">
         {benefits.map((benefit) => (
           <div key={benefit} className="flex items-center justify-between rounded-[20px] bg-white px-4 py-3">
-            <span className="text-sm font-semibold">{benefit}</span>
+            <span className="text-sm font-bold">{benefit}</span>
             <BadgeCheck className="text-[var(--green-deep)]" size={18} />
           </div>
         ))}
       </div>
       <div className="mt-6 grid grid-cols-2 gap-3">
         <button type="button" className="rounded-[24px] bg-white p-4 text-left">
-          <span className="block text-sm font-extrabold">Месяц</span>
+          <span className="block text-sm font-black">Месяц</span>
           <span className="mt-1 block text-xs text-[var(--muted)]">499 руб.</span>
         </button>
         <button type="button" className="relative rounded-[24px] bg-[var(--lavender-soft)] p-4 text-left">
-          <span className="absolute -top-2 right-4 rounded-full bg-[var(--pink)] px-2 py-1 text-[10px] font-black text-white">
-            выгодно
-          </span>
-          <span className="block text-sm font-extrabold">Год</span>
+          <span className="absolute -top-2 right-4 rounded-full bg-[var(--pink)] px-2 py-1 text-[10px] font-black text-white">выгодно</span>
+          <span className="block text-sm font-black">Год</span>
           <span className="mt-1 block text-xs text-[var(--muted)]">3 990 руб.</span>
         </button>
       </div>
@@ -757,18 +1243,8 @@ function PremiumScreen({ onClose }: { onClose: () => void }) {
       </AppButton>
       <AnimatePresence>
         {success && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/95 text-center backdrop-blur"
-          >
-            <motion.div
-              initial={{ scale: 0.6, rotate: -10 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 220, damping: 14 }}
-              className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--green-soft)] text-[var(--green-deep)]"
-            >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/95 text-center backdrop-blur">
+            <motion.div initial={{ scale: 0.6, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 220, damping: 14 }} className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--green-soft)] text-[var(--green-deep)]">
               <BadgeCheck size={38} />
             </motion.div>
             <p className="text-xl font-black tracking-[-0.03em]">Готово</p>
@@ -783,17 +1259,13 @@ function PremiumScreen({ onClose }: { onClose: () => void }) {
 function ProfileScreen({ onToast }: { onToast: (value: string) => void }) {
   return (
     <div className="flex h-full flex-col overflow-y-auto px-5 pb-28 pt-4">
-      <h1 className="text-[32px] font-black leading-none tracking-[-0.04em]">Профиль</h1>
-      <div className="mt-6 rounded-[28px] bg-white p-4 shadow-[0_12px_30px_rgba(17,17,17,0.055)]">
+      <h1 className="text-[30px] font-black leading-none tracking-[-0.035em]">Профиль</h1>
+      <div className="mt-5 rounded-[28px] bg-white p-4 shadow-[0_12px_30px_rgba(17,17,17,0.055)]">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[var(--lavender)] to-[var(--pink)] text-lg font-black text-white">
-            АН
-          </div>
+          <VoiceOrb small />
           <div>
             <p className="text-lg font-black tracking-[-0.03em]">Анна</p>
-            <p className="mt-1 w-fit rounded-full bg-[var(--green-soft)] px-3 py-1 text-xs font-black text-[var(--green-deep)]">
-              Demo Free · всё доступно
-            </p>
+            <p className="mt-1 w-fit rounded-full bg-[var(--green-soft)] px-3 py-1 text-xs font-black text-[var(--green-deep)]">Demo Free · всё доступно</p>
           </div>
         </div>
       </div>
@@ -811,7 +1283,7 @@ function ProfileScreen({ onToast }: { onToast: (value: string) => void }) {
               onClick={() => onToast("Раздел появится в следующей итерации")}
               className="flex w-full items-center justify-between rounded-[22px] bg-white p-4 text-left shadow-[0_10px_24px_rgba(17,17,17,0.045)]"
             >
-              <span className="flex items-center gap-3 text-sm font-semibold">
+              <span className="flex items-center gap-3 text-sm font-bold">
                 <Icon className="text-[var(--lavender-deep)]" size={19} />
                 {item.label}
               </span>
@@ -821,15 +1293,10 @@ function ProfileScreen({ onToast }: { onToast: (value: string) => void }) {
         })}
       </div>
       <div className="mt-5 rounded-[26px] bg-[var(--pink-soft)] p-4">
-        <p className="text-sm font-extrabold">Если тебе плохо прямо сейчас</p>
-        <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">
-          Приложение сопровождает, но не заменяет психиатра, психотерапевта или экстренную помощь.
-        </p>
-        <a
-          href="tel:88002000122"
-          className="mt-3 flex items-center gap-2 rounded-full bg-white px-4 py-3 text-xs font-extrabold"
-        >
-          <Phone size={16} className="text-[var(--pink-deep)]" />
+        <p className="text-sm font-black">Если тебе плохо прямо сейчас</p>
+        <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">Приложение сопровождает, но не заменяет психиатра, психотерапевта или экстренную помощь.</p>
+        <a href="tel:88002000122" className="mt-3 flex items-center gap-2 rounded-full bg-white px-4 py-3 text-xs font-black">
+          <ShieldCheck size={16} className="text-[var(--pink-deep)]" />
           8-800-2000-122
         </a>
       </div>
@@ -840,12 +1307,12 @@ function ProfileScreen({ onToast }: { onToast: (value: string) => void }) {
 function BottomTabs({ active, onChange }: { active: Tab; onChange: (tab: Tab) => void }) {
   const tabs: Array<{ id: Tab; label: string; icon: LucideIcon }> = [
     { id: "chat", label: "Чат", icon: MessageCircle },
-    { id: "programs", label: "Программы", icon: HomeIcon },
+    { id: "programs", label: "Практики", icon: HomeIcon },
     { id: "profile", label: "Профиль", icon: SunMedium },
   ];
 
   return (
-    <nav className="border-t border-black/5 bg-white/90 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 backdrop-blur">
+    <nav className="shrink-0 border-t border-black/5 bg-white/90 px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 backdrop-blur">
       <div className="grid grid-cols-3 gap-1 rounded-full bg-[var(--card)] p-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -859,18 +1326,10 @@ function BottomTabs({ active, onChange }: { active: Tab; onChange: (tab: Tab) =>
                 haptic("light");
                 onChange(tab.id);
               }}
-              className={cx(
-                "relative flex flex-col items-center gap-1 rounded-full py-2 text-[11px] font-bold transition focus:outline-none",
-                selected ? "text-[var(--ink)]" : "text-black/35",
-              )}
+              className={cx("relative flex flex-col items-center gap-1 rounded-full py-2 text-[11px] font-black transition focus:outline-none", selected ? "text-[var(--ink)]" : "text-black/35")}
             >
-              {selected && (
-                <motion.span
-                  layoutId="active-tab"
-                  className="absolute inset-0 rounded-full bg-white shadow-[0_8px_20px_rgba(17,17,17,0.08)]"
-                />
-              )}
-              <Icon className="relative" size={20} />
+              {selected && <motion.span layoutId="active-tab" className="absolute inset-0 rounded-full bg-white shadow-[0_8px_20px_rgba(17,17,17,0.08)]" />}
+              <Icon className="relative" size={19} />
               <span className="relative">{tab.label}</span>
             </motion.button>
           );
@@ -901,17 +1360,10 @@ function MainTabs({
   }
 
   return (
-    <div className="relative flex h-full flex-col">
+    <div className="relative flex h-full min-h-0 flex-col">
       <div className="min-h-0 flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
-          <motion.div
-            key={tab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="h-full"
-          >
+          <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="h-full">
             {tab === "chat" && <ChatScreen module={module} method={method} onPremium={onPremium} onReset={onReset} />}
             {tab === "programs" && <ProgramsScreen onPremium={onPremium} />}
             {tab === "profile" && <ProfileScreen onToast={showToast} />}
@@ -921,12 +1373,7 @@ function MainTabs({
       <BottomTabs active={tab} onChange={setTab} />
       <AnimatePresence>
         {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            className="absolute bottom-24 left-1/2 z-40 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--ink)] px-4 py-2 text-xs font-semibold text-white shadow-xl"
-          >
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }} className="absolute bottom-24 left-1/2 z-40 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--ink)] px-4 py-2 text-xs font-bold text-white shadow-xl">
             {toast}
           </motion.div>
         )}
@@ -937,14 +1384,31 @@ function MainTabs({
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>("onboarding");
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [selectedModule, setSelectedModule] = useState<ModuleOption | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<MethodOption | null>(null);
 
+  function resetConstructor() {
+    setSelectedModule(null);
+    setSelectedMethod(null);
+    setStage("intake");
+  }
+
   const content = useMemo(() => {
-    if (stage === "onboarding") return <OnboardingScreen onDone={() => setStage("module")} />;
+    if (stage === "onboarding") return <OnboardingScreen onDone={() => setStage("intake")} />;
+    if (stage === "intake") {
+      return (
+        <IntakeScreen
+          answers={answers}
+          onAnswer={(id, value) => setAnswers((current) => ({ ...current, [id]: value }))}
+          onDone={() => setStage("module")}
+        />
+      );
+    }
     if (stage === "module") {
       return (
         <ModuleScreen
+          answers={answers}
           onSelect={(module) => {
             setSelectedModule(module);
             setStage("method");
@@ -964,28 +1428,19 @@ export default function Home() {
         />
       );
     }
-    if (stage === "premium") {
-      return <PremiumScreen onClose={() => setStage("main")} />;
-    }
+    if (stage === "premium") return <PremiumScreen onClose={() => setStage("main")} />;
     if (selectedModule && selectedMethod) {
       return (
         <MainTabs
           module={selectedModule}
           method={selectedMethod}
           onPremium={() => setStage("premium")}
-          onReset={() => {
-            setSelectedModule(null);
-            setSelectedMethod(null);
-            setStage("module");
-          }}
+          onReset={resetConstructor}
         />
       );
     }
-    return <ModuleScreen onSelect={(module) => {
-      setSelectedModule(module);
-      setStage("method");
-    }} />;
-  }, [selectedMethod, selectedModule, stage]);
+    return <OnboardingScreen onDone={() => setStage("intake")} />;
+  }, [answers, selectedMethod, selectedModule, stage]);
 
   return (
     <ScreenShell>
@@ -996,7 +1451,7 @@ export default function Home() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -24 }}
           transition={{ duration: 0.28, ease: "easeOut" }}
-          className="h-full"
+          className="h-full min-h-0"
         >
           {content}
         </motion.div>

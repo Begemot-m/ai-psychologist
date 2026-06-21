@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
-import { Inter, Unbounded } from "next/font/google";
+import { Onest } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const onest = Onest({
+  variable: "--font-onest",
   subsets: ["latin", "cyrillic"],
-});
-
-const unbounded = Unbounded({
-  variable: "--font-display",
-  subsets: ["latin", "cyrillic"],
-  weight: ["600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -24,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={`${inter.variable} ${unbounded.variable} h-full antialiased`}>
+    <html lang="ru" className={`${onest.variable} h-full antialiased`}>
       <body className="min-h-full">{children}</body>
     </html>
   );

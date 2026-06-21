@@ -4,25 +4,28 @@
 
 :root {
   --page: #e9e4f7;
-  --app: #fafaf8;
-  --ink: #111111;
-  --muted: rgba(17, 17, 17, 0.58);
-  --card: #f2f2ef;
+  --app: #fbfaf7;
+  --ink: #151313;
+  --muted: rgba(21, 19, 19, 0.58);
+  --card: #f1f0ea;
   --lavender: #b8a9ff;
   --lavender-soft: rgba(184, 169, 255, 0.24);
-  --lavender-deep: #7a67e0;
+  --lavender-deep: #7461df;
   --pink: #ff9fb2;
-  --pink-soft: rgba(255, 159, 178, 0.22);
-  --pink-deep: #ff6e8a;
+  --pink-soft: rgba(255, 159, 178, 0.2);
+  --pink-deep: #ee6681;
   --green: #7bc47f;
-  --green-soft: rgba(123, 196, 127, 0.2);
-  --green-deep: #3c9c43;
+  --green-soft: rgba(123, 196, 127, 0.19);
+  --green-deep: #358f3d;
+  --sun: #ffd36e;
+  --sun-soft: rgba(255, 211, 110, 0.24);
+  --sun-deep: #a66f00;
 }
 
 @theme inline {
   --color-background: var(--app);
   --color-foreground: var(--ink);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-onest);
 }
 
 * {
@@ -35,7 +38,7 @@ body {
   min-height: 100%;
   background: var(--page);
   color: var(--ink);
-  font-family: var(--font-inter), Inter, Arial, Helvetica, sans-serif;
+  font-family: var(--font-onest), Arial, Helvetica, sans-serif;
   letter-spacing: 0;
 }
 
@@ -52,7 +55,8 @@ button {
 h1,
 h2,
 h3 {
-  font-family: var(--font-display), var(--font-inter), sans-serif;
+  font-family: var(--font-onest), Arial, Helvetica, sans-serif;
+  letter-spacing: -0.035em;
 }
 
 ::selection {
