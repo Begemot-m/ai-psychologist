@@ -276,6 +276,17 @@ const methods: MethodOption[] = [
     tone: "sun",
   },
   {
+    id: "psychoanalysis",
+    title: "Психоанализ",
+    caption: "смыслы и повторения",
+    bestFor: "когда важно понять, почему ситуация повторяется и что за ней стоит",
+    howWorks: "Смотрит не только на симптом, но и на скрытый конфликт, защиту, перенос и повторяющийся сценарий отношений с собой и другими.",
+    flow: ["свободная речь", "повторяющийся мотив", "защита", "новый смысл"],
+    question: "Где в этой ситуации есть ощущение: «со мной снова происходит то же самое»?",
+    icon: Brain,
+    tone: "lavender",
+  },
+  {
     id: "mindfulness",
     title: "Майндфулнес",
     caption: "тело и внимание",
@@ -350,8 +361,6 @@ const scriptedReplies = [
   "Если смотреть по КПТ, нам нужна мысль, которая разгоняет состояние. Запиши её одной фразой. Потом спросим: какие факты за неё, какие против, и какой более честный вариант звучит без самообмана.",
   "Мягкое задание: сегодня выбери одно действие на 10 минут, которое поддерживает тебя, а не доказывает твою продуктивность. После отметь: стало легче, тяжелее или так же?",
 ];
-
-const supportPath = ["понять", "стабилиз.", "шаг"];
 
 const programs = [
   {
@@ -429,7 +438,7 @@ function haptic(style: "light" | "medium" | "heavy" = "light") {
     }
   ).Telegram?.WebApp?.HapticFeedback;
   telegram?.impactOccurred?.(style);
-  if (!telegram && navigator.vibrate) navigator.vibrate(style === "heavy" ? 22 : style === "medium" ? 14 : 7);
+  if (!telegram && navigator.vibrate) navigator.vibrate(style === "heavy" ? 12 : style === "medium" ? 8 : 4);
   try {
     const AudioCtor =
       window.AudioContext ||
@@ -443,13 +452,13 @@ function haptic(style: "light" | "medium" | "heavy" = "light") {
     const now = audioContext.currentTime;
     const oscillator = audioContext.createOscillator();
     const gain = audioContext.createGain();
-    const tone = style === "heavy" ? 190 : style === "medium" ? 330 : 520;
-    const duration = style === "heavy" ? 0.085 : style === "medium" ? 0.055 : 0.035;
+    const tone = style === "heavy" ? 420 : style === "medium" ? 560 : 720;
+    const duration = style === "heavy" ? 0.072 : style === "medium" ? 0.052 : 0.038;
     oscillator.type = "sine";
     oscillator.frequency.setValueAtTime(tone, now);
-    oscillator.frequency.exponentialRampToValueAtTime(tone * 0.72, now + duration);
+    oscillator.frequency.exponentialRampToValueAtTime(tone * 0.82, now + duration);
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(style === "heavy" ? 0.038 : 0.024, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(style === "heavy" ? 0.012 : style === "medium" ? 0.009 : 0.006, now + 0.006);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     oscillator.connect(gain);
     gain.connect(audioContext.destination);
@@ -520,9 +529,9 @@ function ScreenShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[var(--page)] text-[var(--ink)] sm:flex sm:items-center sm:justify-center sm:p-6">
       <div className="luxury-grain relative mx-auto flex h-[100svh] w-full max-w-[430px] overflow-hidden bg-[var(--app)] shadow-[0_30px_100px_rgba(12,12,12,0.18)] sm:h-[calc(100svh-48px)] sm:max-h-[844px] sm:rounded-[46px] sm:border sm:border-white/80">
-        <div className="pointer-events-none absolute -right-20 top-12 h-52 w-52 rounded-full bg-[var(--lavender)]/20 blur-3xl" />
-        <div className="pointer-events-none absolute -left-24 top-72 h-48 w-48 rounded-full bg-[var(--green)]/22 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-8 right-10 h-44 w-44 rounded-full bg-[var(--pink)]/16 blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 top-12 h-52 w-52 rounded-full bg-[var(--siri-blue)]/14 blur-3xl" />
+        <div className="pointer-events-none absolute -left-24 top-72 h-48 w-48 rounded-full bg-[var(--siri-cyan)]/13 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-8 right-10 h-44 w-44 rounded-full bg-[var(--siri-violet)]/11 blur-3xl" />
         <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-14 bg-gradient-to-b from-[var(--app)]/90 to-transparent" />
         <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
       </div>
@@ -560,100 +569,77 @@ function MotionGlyph({ icon: Icon, tone, active = false }: { icon: LucideIcon; t
 }
 
 function VoiceOrb({ thinking = false, small = false }: { thinking?: boolean; small?: boolean }) {
-  const size = small ? "h-20 w-20" : "h-[120px] w-[120px]";
+  const size = small ? "h-16 w-16" : "h-[118px] w-[118px]";
+  const core = small ? "h-10 w-10" : "h-[76px] w-[76px]";
+  const particles = small ? 8 : 14;
   return (
     <div className={cx("siri-glow relative flex items-center justify-center", size)}>
-      {[0, 1, 2, 3].map((ring) => (
+      {[0, 1, 2].map((ring) => (
         <motion.span
           key={ring}
           animate={{
-            borderRadius: ["42% 58% 56% 44%", "58% 42% 45% 55%", "48% 52% 62% 38%", "42% 58% 56% 44%"],
-            scale: thinking ? [0.74, 1.18 + ring * 0.05, 0.82] : [0.86, 1.02 + ring * 0.03, 0.88],
-            opacity: thinking ? [0.72, 0.28, 0.58] : [0.42, 0.2, 0.36],
-            rotate: [0, ring % 2 ? -28 : 28, 0],
+            borderRadius: ["45% 55% 58% 42%", "62% 38% 44% 56%", "48% 52% 64% 36%", "45% 55% 58% 42%"],
+            scale: thinking ? [0.82, 1.2 + ring * 0.05, 0.9] : [0.9, 1.04 + ring * 0.03, 0.94],
+            opacity: thinking ? [0.42, 0.72, 0.46] : [0.28, 0.44, 0.3],
+            rotate: [0, ring % 2 ? -34 : 32, 0],
           }}
-          transition={{ duration: thinking ? 1.45 + ring * 0.2 : 4.8 + ring * 0.7, repeat: Infinity, ease: "easeInOut" }}
-          className={cx(
-            "absolute blur-[1px]",
-            size,
-            ring === 0 && "bg-[var(--lavender)]",
-            ring === 1 && "bg-[var(--pink)]",
-            ring === 2 && "bg-[var(--green)]",
-            ring === 3 && "bg-[var(--sun)]",
-          )}
+          transition={{ duration: thinking ? 1.25 + ring * 0.18 : 4.4 + ring * 0.62, repeat: Infinity, ease: "easeInOut" }}
+          className={cx("absolute", size)}
+          style={{
+            background:
+              ring === 0
+                ? "radial-gradient(circle at 35% 35%, rgba(114,231,255,.95), rgba(109,124,255,.42) 48%, transparent 70%)"
+                : ring === 1
+                  ? "radial-gradient(circle at 66% 38%, rgba(178,122,255,.9), rgba(255,133,202,.34) 46%, transparent 72%)"
+                  : "radial-gradient(circle at 48% 72%, rgba(255,255,255,.85), rgba(114,231,255,.32) 42%, transparent 70%)",
+            filter: small ? "blur(4px)" : "blur(7px)",
+            mixBlendMode: "multiply",
+          }}
         />
       ))}
+      {Array.from({ length: particles }).map((_, index) => {
+        const angle = (index / particles) * Math.PI * 2;
+        const radius = small ? 25 : 48;
+        return (
+          <motion.span
+            key={index}
+            animate={{
+              x: [Math.cos(angle) * radius * 0.62, Math.cos(angle + 0.52) * radius, Math.cos(angle) * radius * 0.62],
+              y: [Math.sin(angle) * radius * 0.62, Math.sin(angle + 0.52) * radius, Math.sin(angle) * radius * 0.62],
+              opacity: thinking ? [0.18, 0.72, 0.22] : [0.12, 0.34, 0.12],
+              scale: thinking ? [0.75, 1.25, 0.85] : [0.8, 1.05, 0.82],
+            }}
+            transition={{ duration: thinking ? 1.35 : 3.8, repeat: Infinity, delay: index * 0.045, ease: "easeInOut" }}
+            className="absolute h-1.5 w-1.5 rounded-full bg-[var(--siri-cyan)]"
+          />
+        );
+      })}
       <motion.span
         animate={{
-          borderRadius: ["35% 65% 56% 44%", "58% 42% 38% 62%", "45% 55% 64% 36%", "35% 65% 56% 44%"],
-          scale: thinking ? [1, 0.92, 1.06, 0.98, 1] : [1, 1.035, 1],
+          borderRadius: ["37% 63% 57% 43%", "60% 40% 42% 58%", "45% 55% 66% 34%", "37% 63% 57% 43%"],
+          scale: thinking ? [1, 0.94, 1.07, 0.98, 1] : [1, 1.03, 1],
         }}
-        transition={{ duration: thinking ? 1.05 : 3.6, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: thinking ? 0.98 : 3.6, repeat: Infinity, ease: "easeInOut" }}
         className={cx(
-          "relative bg-white/78 shadow-[inset_0_1px_12px_rgba(255,255,255,0.9),0_26px_80px_rgba(122,83,166,0.24)] backdrop-blur",
-          small ? "h-11 w-11" : "h-[72px] w-[72px]",
+          "relative border border-white/80 bg-white/72 shadow-[inset_0_1px_16px_rgba(255,255,255,0.94),0_22px_62px_rgba(95,105,216,0.2)] backdrop-blur-xl",
+          core,
         )}
       />
     </div>
   );
 }
 
-function VoiceBars({ thinking }: { thinking: boolean }) {
+function VoiceSignal({ thinking }: { thinking: boolean }) {
   return (
-    <div className="flex h-6 items-center justify-center gap-1.5">
-      {[0, 1, 2, 3, 4, 5, 6].map((bar) => (
+    <div className="flex items-center justify-center gap-1.5">
+      {[0, 1, 2].map((dot) => (
         <motion.span
-          key={bar}
-          animate={{ height: thinking ? [8, 26 - Math.abs(3 - bar) * 3, 10] : [8, 13 + (bar % 3) * 2, 8], opacity: thinking ? [0.48, 1, 0.58] : [0.3, 0.6, 0.3] }}
-          transition={{ duration: thinking ? 0.82 : 2.4, repeat: Infinity, delay: bar * 0.06, ease: "easeInOut" }}
-          className="w-1.5 rounded-full bg-gradient-to-b from-[var(--pink)] via-[var(--lavender)] to-[var(--green)]"
+          key={dot}
+          animate={{ y: thinking ? [0, -4, 0] : [0, -2, 0], opacity: thinking ? [0.36, 1, 0.36] : [0.28, 0.58, 0.28] }}
+          transition={{ duration: thinking ? 0.72 : 1.8, repeat: Infinity, delay: dot * 0.14, ease: "easeInOut" }}
+          className="h-1.5 w-1.5 rounded-full bg-[var(--siri-blue)]"
         />
       ))}
-    </div>
-  );
-}
-
-function VoiceStage({ thinking, title, subtitle }: { thinking: boolean; title: string; subtitle: string }) {
-  return (
-    <div className="line-field relative overflow-hidden rounded-[34px] border border-black/8 bg-white/82 px-4 pb-4 pt-4 shadow-[0_24px_68px_var(--soft-shadow)] backdrop-blur-2xl">
-      <div className="absolute -left-10 top-8 h-32 w-32 rounded-full bg-[var(--pink)]/20 blur-3xl" />
-      <div className="absolute -right-10 bottom-2 h-36 w-36 rounded-full bg-[var(--green)]/22 blur-3xl" />
-      <motion.div
-        animate={{ x: ["-20%", "110%"] }}
-        transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute left-0 top-0 h-1 w-40 rounded-full ga-accent"
-      />
-      <div className="relative flex flex-col items-center text-center">
-        <VoiceOrb thinking={thinking} />
-        <VoiceBars thinking={thinking} />
-        <p className="font-display text-[27px] leading-[1.02]">{title}</p>
-        <p className="mt-1.5 max-w-[285px] text-[11px] font-semibold leading-relaxed text-[var(--muted)]">{subtitle}</p>
-      </div>
-    </div>
-  );
-}
-
-function SessionRail({ activeIndex }: { activeIndex: number }) {
-  return (
-    <div className="mt-3 rounded-[24px] border border-black/8 bg-white/74 p-2 shadow-[0_14px_36px_rgba(12,12,12,0.06)] backdrop-blur">
-      <div className="grid grid-cols-3 gap-1">
-        {supportPath.map((step, index) => {
-          const active = index <= activeIndex;
-          return (
-            <motion.div
-              key={step}
-              animate={{ opacity: active ? 1 : 0.42 }}
-              className={cx(
-                "relative overflow-hidden rounded-full px-2 py-2 text-center text-[9px] font-extrabold uppercase",
-                active ? "bg-[var(--ink)] text-white" : "bg-[var(--card)] text-black/50",
-              )}
-            >
-              {active && <span className="absolute inset-x-3 top-0 h-0.5 rounded-full ga-accent" />}
-              <span className="relative">{index + 1}. {step}</span>
-            </motion.div>
-          );
-        })}
-      </div>
     </div>
   );
 }
@@ -811,18 +797,107 @@ function ModuleScreen({ onSelect, answers }: { onSelect: (module: ModuleOption) 
   const [activeIndex, setActiveIndex] = useState(recommendedIndex);
   const active = modules[activeIndex] ?? modules[0];
   const ActiveIcon = active.icon;
+  const answerLabels: Record<string, string> = {
+    anxiety: "тревога",
+    burnout: "усталость",
+    relations: "отношения",
+    body: "тело",
+    thoughts: "мысли",
+    actions: "поведение",
+    calm: "успокоиться",
+    understand: "понять себя",
+    step: "сделать шаг",
+  };
+
+  function switchModule(index: number) {
+    const next = (index + modules.length) % modules.length;
+    haptic("light");
+    setActiveIndex(next);
+  }
 
   return (
     <div className="flex h-full min-w-0 flex-col px-5 pb-5">
       <TopBar label="конструктор" />
       <div className="mt-4">
-        <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--lavender-deep)]">персональная сборка</p>
-        <h1 className="mt-2 text-[30px] font-extrabold leading-[1.02]">Выбери фокус работы</h1>
+        <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--lavender-deep)]">настройка сигнала</p>
+        <h1 className="mt-2 text-[30px] font-extrabold leading-[1.02]">Подберём направление</h1>
         <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">
-          Мы уже учли ответы анкеты. Можно взять рекомендацию или пролистать другие направления.
+          Анкета уже дала контекст. Свайпай центральную карточку или выбирай быстрый чип ниже.
         </p>
       </div>
-      <div className="mt-5 flex min-w-0 gap-3 overflow-x-auto pb-2">
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+        {Object.values(answers)
+          .filter((value) => answerLabels[value])
+          .slice(0, 4)
+          .map((value) => (
+            <span key={value} className="shrink-0 rounded-full bg-white/78 px-3 py-2 text-[11px] font-extrabold text-black/50 shadow-[0_8px_22px_rgba(10,12,19,0.04)]">
+              {answerLabels[value]}
+            </span>
+          ))}
+      </div>
+      <div className="relative mt-4 min-h-0 flex-1 overflow-hidden">
+        <motion.div
+          key={active.id}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.18}
+          onDragEnd={(_, info) => {
+            if (info.offset.x < -48) switchModule(activeIndex + 1);
+            if (info.offset.x > 48) switchModule(activeIndex - 1);
+          }}
+          initial={{ opacity: 0, x: 34, scale: 0.98 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          exit={{ opacity: 0, x: -34, scale: 0.98 }}
+          transition={{ duration: 0.26, ease: "easeOut" }}
+          className="relative h-full overflow-hidden rounded-[34px] border border-white/80 bg-white/82 p-5 shadow-[0_22px_56px_rgba(10,12,19,0.08)] backdrop-blur-2xl"
+        >
+          <div className="pointer-events-none absolute -right-14 -top-12 h-44 w-44 rounded-full bg-[var(--siri-blue)]/14 blur-3xl" />
+          <div className="pointer-events-none absolute -left-14 bottom-10 h-40 w-40 rounded-full bg-[var(--siri-cyan)]/16 blur-3xl" />
+          <div className="relative flex h-full flex-col">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-black/34">
+                  {activeIndex + 1} / {modules.length}
+                </p>
+                <h2 className="mt-2 text-[29px] font-extrabold leading-none">{active.title}</h2>
+                <p className="mt-2 text-sm font-semibold text-black/46">{active.caption}</p>
+              </div>
+              <MotionGlyph icon={ActiveIcon} tone={active.tone} active />
+            </div>
+            <p className="mt-5 text-[14px] leading-relaxed text-[var(--muted)]">{active.description}</p>
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              {active.tags.map((tag) => (
+                <span key={tag} className="rounded-[18px] bg-[var(--card)] px-2 py-3 text-center text-[11px] font-extrabold text-black/52">
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <div className="mt-5 space-y-2">
+              {active.outcomes.map((outcome, index) => (
+                <motion.div
+                  key={outcome}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex items-center gap-3 rounded-[20px] bg-[var(--app)] px-3 py-3 text-sm font-bold"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[11px] text-[var(--lavender-deep)] shadow-sm">
+                    {index + 1}
+                  </span>
+                  {outcome}
+                </motion.div>
+              ))}
+            </div>
+            <div className="mt-auto pt-4">
+              <div className="rounded-[24px] bg-[var(--ink)] p-4 text-white shadow-[0_18px_42px_rgba(10,12,19,0.12)]">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-white/48">первый ход</p>
+                <p className="mt-2 text-[13px] font-semibold leading-relaxed text-white/82">{active.prompt}</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+      <div className="mt-4 flex min-w-0 gap-2 overflow-x-auto pb-1 hide-scrollbar">
         {modules.map((module, index) => {
           const Icon = module.icon;
           const selected = index === activeIndex;
@@ -832,56 +907,22 @@ function ModuleScreen({ onSelect, answers }: { onSelect: (module: ModuleOption) 
               type="button"
               whileTap={{ scale: 0.96 }}
               onClick={() => {
-                haptic("light");
-                setActiveIndex(index);
+                switchModule(index);
               }}
               className={cx(
-                "w-[132px] shrink-0 rounded-[28px] border p-3 text-left transition",
-                selected ? "border-[var(--ink)] bg-white shadow-[0_16px_38px_rgba(17,17,17,0.08)]" : "border-transparent bg-white/60",
+                "flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-left transition",
+                selected ? "border-[var(--ink)] bg-[var(--ink)] text-white shadow-[0_14px_34px_rgba(10,12,19,0.14)]" : "border-transparent bg-white/70 text-black/48",
               )}
             >
-              <span className={cx("mb-4 flex h-12 w-12 items-center justify-center rounded-2xl", toneClasses(module.tone))}>
-                <Icon size={22} />
+              <span className={cx("flex h-8 w-8 items-center justify-center rounded-full", selected ? "bg-white/12 text-white" : toneClasses(module.tone))}>
+                <Icon size={16} />
               </span>
-              <span className="block text-[15px] font-extrabold leading-tight">{module.title}</span>
-              <span className="mt-1 block text-[11px] text-[var(--muted)]">{module.caption}</span>
+              <span className="whitespace-nowrap text-[12px] font-extrabold">{module.title}</span>
             </motion.button>
           );
         })}
       </div>
-      <motion.div
-        key={active.id}
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mt-3 min-h-0 flex-1 overflow-hidden rounded-[34px] bg-white p-5 shadow-[0_18px_42px_rgba(17,17,17,0.07)]"
-      >
-        <div className="flex items-start gap-4">
-          <MotionGlyph icon={ActiveIcon} tone={active.tone} active />
-          <div className="min-w-0">
-            <p className="text-xl font-extrabold">{active.title}</p>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{active.description}</p>
-          </div>
-        </div>
-        <div className="mt-5 flex flex-wrap gap-2">
-          {active.tags.map((tag) => (
-            <span key={tag} className="rounded-full bg-[var(--card)] px-3 py-1.5 text-[11px] font-bold text-black/55">
-              {tag}
-            </span>
-          ))}
-        </div>
-        <div className="mt-5 space-y-2">
-          {active.outcomes.map((outcome) => (
-            <div key={outcome} className="flex items-center gap-2 text-sm font-bold">
-              <Check className="text-[var(--green-deep)]" size={16} />
-              {outcome}
-            </div>
-          ))}
-        </div>
-        <div className="mt-5 rounded-[22px] bg-[var(--app)] p-4 text-[13px] leading-relaxed text-black/62">
-          {active.prompt}
-        </div>
-      </motion.div>
-      <AppButton onClick={() => onSelect(active)} className="mt-4 w-full">
+      <AppButton onClick={() => onSelect(active)} className="mt-3 w-full">
         Выбрать направление
         <ChevronRight size={18} />
       </AppButton>
@@ -1007,7 +1048,6 @@ function PremiumChatScreen({
   const [replyIndex, setReplyIndex] = useState(0);
   const [thinking, setThinking] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const activeStep = Math.min(Math.max(messages.filter((message) => message.role === "user").length, 0), supportPath.length - 1);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1030,14 +1070,14 @@ function PremiumChatScreen({
 
   return (
     <div className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--app)]">
-      <div className="pointer-events-none absolute -left-28 top-8 h-72 w-72 rounded-full bg-[var(--green)]/20 blur-3xl" />
-      <div className="pointer-events-none absolute -right-28 top-44 h-80 w-80 rounded-full bg-[var(--lavender)]/22 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-20 left-10 h-52 w-52 rounded-full bg-[var(--pink)]/14 blur-3xl" />
-      <header className="relative z-10 shrink-0 px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))]">
+      <div className="pointer-events-none absolute -left-28 top-8 h-72 w-72 rounded-full bg-[var(--siri-cyan)]/12 blur-3xl" />
+      <div className="pointer-events-none absolute -right-28 top-36 h-80 w-80 rounded-full bg-[var(--siri-blue)]/13 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-16 left-10 h-52 w-52 rounded-full bg-[var(--siri-violet)]/10 blur-3xl" />
+      <header className="relative z-10 shrink-0 px-4 pb-1 pt-[max(12px,env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
           <div className="min-w-0">
-            <p className="font-display truncate text-[19px] font-bold leading-none">{module.title}</p>
-            <p className="mt-1 text-[11px] font-extrabold uppercase text-black/45">{method.title} · TG mini app</p>
+            <p className="font-display truncate text-[18px] font-bold leading-none">{module.title}</p>
+            <p className="mt-1 text-[11px] font-extrabold uppercase text-black/38">{method.title} · ассистент рядом</p>
           </div>
           <motion.button
             type="button"
@@ -1046,7 +1086,7 @@ function PremiumChatScreen({
               haptic("light");
               onReset();
             }}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/58 shadow-[0_14px_34px_rgba(44,26,18,0.08)] backdrop-blur"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/64 shadow-[0_14px_34px_rgba(10,12,19,0.06)] backdrop-blur"
             aria-label="Сбросить выбор"
           >
             <RotateCcw size={17} />
@@ -1054,31 +1094,34 @@ function PremiumChatScreen({
         </div>
       </header>
 
-      <div className="relative z-10 shrink-0 px-4">
-        <VoiceStage
-          thinking={thinking}
-          title={thinking ? "Собираю ответ" : "Я веду сессию"}
-          subtitle={thinking ? "Сверяю состояние, не поддакиваю и выбираю следующий бережный шаг." : "Не меню команд. Пиши как есть — я проведу через понимание, стабилизацию и действие."}
-        />
-        <SessionRail activeIndex={activeStep} />
+      <div className="relative z-10 flex shrink-0 flex-col items-center px-4 pb-1 pt-1 text-center">
+        <VoiceOrb thinking={thinking} />
+        <motion.div
+          animate={{ opacity: thinking ? [0.62, 1, 0.62] : 0.66 }}
+          transition={{ duration: thinking ? 1.2 : 0.2, repeat: thinking ? Infinity : 0 }}
+          className="mt-1 flex items-center gap-2 rounded-full bg-white/58 px-3 py-1.5 text-[11px] font-extrabold text-black/46 backdrop-blur"
+        >
+          {thinking ? "подбираю бережный ответ" : "пиши как есть"}
+          {thinking && <VoiceSignal thinking />}
+        </motion.div>
       </div>
 
-      <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-4">
-        <div className="space-y-3">
+      <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        <div className="space-y-4">
           {messages.map((message) => (
             <motion.div
               key={message.id}
-              initial={{ opacity: 0, y: 12, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.28, ease: "easeOut" }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.24, ease: "easeOut" }}
               className={cx("flex", message.role === "user" ? "justify-end" : "justify-start")}
             >
               <div
                 className={cx(
-                  "max-w-[86%] rounded-[26px] px-4 py-3 text-[14px] leading-relaxed shadow-[0_16px_36px_rgba(12,12,12,0.07)]",
+                  "max-w-[88%] px-4 py-3 text-[14px] leading-relaxed",
                   message.role === "user"
-                    ? "rounded-br-[10px] bg-[var(--ink)] text-white"
-                    : "rounded-bl-[10px] border border-black/8 bg-white/86 text-[var(--ink)] backdrop-blur",
+                    ? "rounded-[24px] rounded-br-[7px] bg-[var(--ink)] text-white shadow-[0_16px_34px_rgba(10,12,19,0.16)]"
+                    : "rounded-[24px] rounded-bl-[7px] bg-white/58 text-[var(--ink)] backdrop-blur",
                 )}
               >
                 {message.text}
@@ -1086,9 +1129,10 @@ function PremiumChatScreen({
             </motion.div>
           ))}
           {thinking && (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start">
-              <div className="rounded-[24px] rounded-bl-[10px] border border-black/8 bg-white/76 px-4 py-3 shadow-[0_16px_36px_rgba(12,12,12,0.06)] backdrop-blur">
-                <VoiceBars thinking />
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start pl-2">
+              <div className="flex items-center gap-2 text-[12px] font-semibold text-black/38">
+                Думаю
+                <VoiceSignal thinking />
               </div>
             </motion.div>
           )}
@@ -1097,19 +1141,19 @@ function PremiumChatScreen({
       </div>
 
       <div className="relative z-10 shrink-0 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-2">
-        <div className="flex items-center gap-2 rounded-full border border-black/8 bg-white/86 p-2 shadow-[0_18px_52px_rgba(12,12,12,0.1)] backdrop-blur-2xl">
+        <div className="flex items-center gap-2 rounded-full border border-white/80 bg-white/78 p-2 shadow-[0_18px_52px_rgba(10,12,19,0.09)] backdrop-blur-2xl">
           <input
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => event.key === "Enter" && send(input)}
             placeholder="Напиши, что происходит..."
-            className="h-11 min-w-0 flex-1 bg-transparent px-3 text-[15px] font-semibold outline-none placeholder:text-black/36"
+            className="h-11 min-w-0 flex-1 bg-transparent px-3 text-[15px] font-semibold outline-none placeholder:text-black/32"
           />
           <motion.button
             type="button"
             whileTap={{ scale: 0.9 }}
             onClick={() => send(input)}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] text-white shadow-[0_14px_34px_rgba(23,17,17,0.22)]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] text-white shadow-[0_14px_34px_rgba(10,12,19,0.2)]"
             aria-label="Отправить"
           >
             <Send size={17} />
@@ -1412,11 +1456,6 @@ function BottomTabs({ active, onChange }: { active: Tab; onChange: (tab: Tab) =>
   return (
     <nav className="shrink-0 bg-transparent px-3 pb-[max(10px,env(safe-area-inset-bottom))] pt-2">
       <div className="relative grid grid-cols-3 gap-1 overflow-hidden rounded-full border border-black/8 bg-white/88 p-1 shadow-[0_18px_52px_rgba(12,12,12,0.1)] backdrop-blur-2xl">
-        <motion.span
-          animate={{ x: ["-30%", "135%"] }}
-          transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut" }}
-          className="pointer-events-none absolute top-0 h-1 w-24 rounded-full ga-accent"
-        />
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const selected = active === tab.id;
