@@ -1,0 +1,7 @@
+project_id = "ai-psychologist"
+
+# psy-chat вызывается со статического GitHub Pages без Supabase-аутентификации:
+# доступ ограничивается внутри функции (CORS origin + дневные квоты).
+
+[functions.psy-chat]
+verify_jwt = false
