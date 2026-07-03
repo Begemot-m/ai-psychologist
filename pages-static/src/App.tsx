@@ -1,22 +1,29 @@
 // Статический прототип для GitHub Pages: чат — главный экран.
-// Онбординг: короткое знакомство → выбор подхода (конструктор). Подход
-// уходит на сервер и меняет системный промпт (КПТ → протоколы, психоанализ →
-// интерпретации и т.д.). История — отдельные чаты, техники и профиль — шторки.
+// Онбординг = конструктор: шаг 1 «направление работы» (тема выбирает банк
+// литературы/подходов), шаг 2 «метод» (в базе только КПТ, остальное — премиум).
+// Тема и метод хранятся на каждый чат, уходят на сервер и меняют системный
+// промпт нейронки. Пересобрать ассистента можно из настроек и при новом чате.
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  BookOpen,
   Brain,
+  ChevronLeft,
+  Compass,
+  Flame,
   Flower2,
   HeartHandshake,
   History,
   Leaf,
+  Lock,
   Moon,
+  Orbit,
   Plus,
   Send,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  Star,
+  Sun,
   Trash2,
   Waves,
   Wind,
@@ -30,18 +37,29 @@ const DAILY_LIMIT = 20;
 
 type Role = "assistant" | "user";
 type Message = { id: string; role: Role; text: string; system?: boolean };
-type ApproachId = "cbt" | "psycho" | "gestalt" | "mindful";
-type Chat = { id: string; approach: ApproachId; title: string; messages: Message[]; updatedAt: number };
-type Sheet = "none" | "techniques" | "profile" | "history" | "approach";
+type TopicId = "anxiety" | "relationships" | "self_esteem" | "burnout" | "mood" | "meaning";
+type MethodId = "cbt" | "psycho" | "gestalt" | "positive";
 type Tone = "lavender" | "pink" | "green" | "sun";
+type Chat = { id: string; topic: TopicId; method: MethodId; title: string; messages: Message[]; updatedAt: number };
+type Sheet = "none" | "techniques" | "profile" | "history" | "config";
 
-const approaches: Array<{
-  id: ApproachId;
+const topics: Array<{ id: TopicId; title: string; caption: string; icon: LucideIcon; tone: Tone }> = [
+  { id: "anxiety", title: "Тревога и стресс", caption: "беспокойство, паника, напряжение", icon: Wind, tone: "lavender" },
+  { id: "relationships", title: "Отношения", caption: "близкие, партнёр, семья", icon: HeartHandshake, tone: "pink" },
+  { id: "self_esteem", title: "Самооценка", caption: "самокритика, сравнение с другими", icon: Star, tone: "sun" },
+  { id: "burnout", title: "Выгорание", caption: "усталость, нет сил, всё бесит", icon: Flame, tone: "pink" },
+  { id: "mood", title: "Настроение и апатия", caption: "пусто, ничего не хочется", icon: Moon, tone: "green" },
+  { id: "meaning", title: "Поиск себя", caption: "ценности, выборы, смысл", icon: Compass, tone: "lavender" },
+];
+
+const methods: Array<{
+  id: MethodId;
   title: string;
   caption: string;
   icon: LucideIcon;
   tone: Tone;
-  greeting: string;
+  premium: boolean;
+  greet: (topicLower: string) => string;
 }> = [
   {
     id: "cbt",
@@ -49,45 +67,49 @@ const approaches: Array<{
     caption: "мысли, протоколы, маленькие шаги",
     icon: Brain,
     tone: "lavender",
-    greeting:
-      "Я рядом. Будем работать в духе КПТ: замечать мысли, проверять их на факты и пробовать маленькие шаги. Что сейчас происходит?",
+    premium: false,
+    greet: (t) =>
+      `Я рядом. Тема — ${t}. Будем работать по КПТ: замечать мысли, проверять их на факты и пробовать маленькие шаги. С чего хочется начать?`,
   },
   {
     id: "psycho",
     title: "Психоанализ",
     caption: "глубинные причины и паттерны",
-    icon: Moon,
+    icon: Orbit,
     tone: "pink",
-    greeting:
-      "Я рядом. Пойдём вглубь без спешки: ассоциации, повторяющиеся сюжеты, то, что обычно остаётся за кадром. С чего хочется начать?",
+    premium: true,
+    greet: (t) => `Я рядом. Тема — ${t}. Пойдём вглубь без спешки: ассоциации, повторяющиеся сюжеты. С чего начнём?`,
   },
   {
     id: "gestalt",
     title: "Гештальт",
-    caption: "чувства здесь и сейчас",
+    caption: "чувства и потребности здесь и сейчас",
     icon: Flower2,
-    tone: "sun",
-    greeting:
-      "Я рядом. Давай замедлимся и заметим, что с тобой прямо сейчас — в мыслях и в теле. Что откликается первым?",
+    tone: "green",
+    premium: true,
+    greet: (t) => `Я рядом. Тема — ${t}. Замедлимся и заметим, что с тобой прямо сейчас. Что откликается первым?`,
   },
   {
-    id: "mindful",
-    title: "ACT · майндфулнес",
-    caption: "принятие, ценности, практики",
-    icon: Leaf,
-    tone: "green",
-    greeting:
-      "Я рядом. Будем учиться смотреть на мысли со стороны и опираться на твои ценности. Что сейчас волнует больше всего?",
+    id: "positive",
+    title: "Позитивная терапия",
+    caption: "ресурсы, сильные стороны, баланс",
+    icon: Sun,
+    tone: "sun",
+    premium: true,
+    greet: (t) => `Я рядом. Тема — ${t}. Начнём с опоры на твои ресурсы и сильные стороны. Что сейчас волнует больше всего?`,
   },
 ];
+
+// Прототип: расширенная версия ещё не куплена, открыт только базовый метод.
+const PREMIUM_UNLOCKED = false;
 
 const welcomePoints: Array<{ icon: LucideIcon; title: string; caption: string }> = [
   { icon: ShieldCheck, title: "Не поддакивает", caption: "сначала уточнит, потом ответит" },
-  { icon: BookOpen, title: "Методики из руководств", caption: "КПТ · психоанализ · гештальт · ACT" },
-  { icon: HeartHandshake, title: "Сопровождает, не указывает", caption: "собран вместе с психологами" },
+  { icon: Sparkles, title: "Собирается под тебя", caption: "тема и метод — твой выбор" },
+  { icon: HeartHandshake, title: "Сопровождает, не указывает", caption: "методики из клинических руководств" },
 ];
 
-const starterChips = ["Мне тревожно", "Не могу уснуть", "Выгорание", "Просто поговорить"];
+const starterChips = ["Мне тревожно", "Не могу уснуть", "Всё раздражает", "Просто поговорить"];
 
 const techniques: Array<{ icon: LucideIcon; title: string; caption: string; prompt: string }> = [
   { icon: Wind, title: "Дыхание 4-7-8", caption: "снять острую тревогу", prompt: "Проведи меня по дыхательной технике 4-7-8, шаг за шагом." },
@@ -140,25 +162,42 @@ function getDeviceId() {
   return id;
 }
 
-function approachOf(id: ApproachId) {
-  return approaches.find((a) => a.id === id) ?? approaches[0];
+function topicOf(id: TopicId) {
+  return topics.find((t) => t.id === id) ?? topics[0];
+}
+
+function methodOf(id: MethodId) {
+  return methods.find((m) => m.id === id) ?? methods[0];
+}
+
+const TOPIC_IDS = topics.map((t) => t.id) as string[];
+const METHOD_IDS = methods.map((m) => m.id) as string[];
+
+function normalizeChat(raw: Record<string, unknown>): Chat {
+  const method = (METHOD_IDS.includes(raw.method as string) ? raw.method : METHOD_IDS.includes(raw.approach as string) ? raw.approach : "cbt") as MethodId;
+  const topic = (TOPIC_IDS.includes(raw.topic as string) ? raw.topic : "anxiety") as TopicId;
+  return {
+    id: typeof raw.id === "string" ? raw.id : uid(),
+    topic,
+    method,
+    title: typeof raw.title === "string" ? raw.title : "Разговор",
+    messages: Array.isArray(raw.messages) ? (raw.messages as Message[]) : [],
+    updatedAt: typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
+  };
 }
 
 function loadChats(): Chat[] {
   try {
     const raw = localStorage.getItem("psy_chats_v1");
     if (raw) {
-      const parsed = JSON.parse(raw) as Chat[];
-      if (Array.isArray(parsed)) return parsed.slice(0, 30);
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.slice(0, 30).map(normalizeChat);
     }
-    // Миграция со старого формата одной сплошной переписки.
     const legacy = localStorage.getItem("psy_messages");
     if (legacy) {
       const messages = (JSON.parse(legacy) as Message[]).slice(-40);
       localStorage.removeItem("psy_messages");
-      if (messages.length) {
-        return [{ id: uid(), approach: "cbt", title: chatTitle(messages), messages, updatedAt: Date.now() }];
-      }
+      if (messages.length) return [normalizeChat({ id: uid(), messages, title: chatTitle(messages), updatedAt: Date.now() })];
     }
   } catch {
     /* повреждённое хранилище — начинаем с чистого */
@@ -173,12 +212,10 @@ function chatTitle(messages: Message[]): string {
 }
 
 function formatDay(ts: number) {
-  const date = new Date(ts);
-  const today = new Date();
-  const diff = Math.floor((today.setHours(0, 0, 0, 0) - new Date(ts).setHours(0, 0, 0, 0)) / 86400000);
+  const diff = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(ts).setHours(0, 0, 0, 0)) / 86400000);
   if (diff <= 0) return "сегодня";
   if (diff === 1) return "вчера";
-  return date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+  return new Date(ts).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 }
 
 async function askAssistant(chat: Chat) {
@@ -187,7 +224,8 @@ async function askAssistant(chat: Chat) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       deviceId: getDeviceId(),
-      approach: chat.approach,
+      topic: chat.topic,
+      approach: chat.method,
       messages: chat.messages
         .filter((m) => !m.system)
         .slice(-10)
@@ -269,78 +307,181 @@ function IconButton({ icon: Icon, label, onClick }: { icon: LucideIcon; label: s
   );
 }
 
-function ApproachCard({
-  approach,
-  active = false,
+function Stepper({ step }: { step: 1 | 2 }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {[1, 2].map((n) => (
+        <span
+          key={n}
+          className={cx(
+            "h-1.5 rounded-full transition-all duration-300",
+            n === step ? "w-6 bg-[var(--lavender)]" : "w-1.5 bg-black/12",
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
+function TopicRow({
+  topic,
+  active,
   delay = 0,
   onPick,
 }: {
-  approach: (typeof approaches)[number];
+  topic: (typeof topics)[number];
   active?: boolean;
   delay?: number;
-  onPick: (id: ApproachId) => void;
+  onPick: (id: TopicId) => void;
 }) {
-  const Icon = approach.icon;
+  const Icon = topic.icon;
   return (
     <motion.button
       type="button"
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.34, ease: "easeOut" }}
+      transition={{ delay, duration: 0.3, ease: "easeOut" }}
       whileTap={{ scale: 0.97 }}
       onClick={() => {
         haptic("medium");
-        onPick(approach.id);
+        onPick(topic.id);
       }}
       className={cx(
-        "flex w-full items-center gap-4 rounded-[24px] border p-4 text-left backdrop-blur transition-shadow",
+        "flex w-full items-center gap-3.5 rounded-[22px] border p-3.5 text-left backdrop-blur transition-shadow",
         active
-          ? "border-[var(--lavender)] bg-white/85 shadow-[0_16px_40px_rgba(125,130,255,0.18)]"
-          : "border-white/70 bg-white/62 shadow-[0_12px_32px_rgba(10,12,19,0.05)]",
+          ? "border-[var(--lavender)] bg-white/85 shadow-[0_14px_36px_rgba(125,130,255,0.18)]"
+          : "border-white/70 bg-white/62 shadow-[0_10px_28px_rgba(10,12,19,0.05)]",
       )}
     >
-      <span className={cx("flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px]", toneClasses(approach.tone))}>
-        <Icon size={22} strokeWidth={1.9} />
+      <span className={cx("flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px]", toneClasses(topic.tone))}>
+        <Icon size={20} strokeWidth={1.9} />
       </span>
       <span className="min-w-0">
-        <span className="block text-[15px] font-bold leading-snug">{approach.title}</span>
-        <span className="mt-0.5 block text-[12.5px] text-[var(--muted)]">{approach.caption}</span>
+        <span className="block text-[14.5px] font-bold leading-snug">{topic.title}</span>
+        <span className="mt-0.5 block text-[12px] text-[var(--muted)]">{topic.caption}</span>
       </span>
     </motion.button>
   );
 }
 
-function Onboarding({ onDone }: { onDone: (approach: ApproachId) => void }) {
-  const [step, setStep] = useState<0 | 1>(0);
+function MethodRow({
+  method,
+  active,
+  locked,
+  delay = 0,
+  onPick,
+}: {
+  method: (typeof methods)[number];
+  active?: boolean;
+  locked?: boolean;
+  delay?: number;
+  onPick: (id: MethodId, locked: boolean) => void;
+}) {
+  const Icon = method.icon;
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto px-6 pb-[max(20px,env(safe-area-inset-bottom))] pt-[max(28px,env(safe-area-inset-top))]">
+    <motion.button
+      type="button"
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.3, ease: "easeOut" }}
+      whileTap={{ scale: 0.97 }}
+      onClick={() => {
+        haptic(locked ? "light" : "medium");
+        onPick(method.id, !!locked);
+      }}
+      className={cx(
+        "relative flex w-full items-center gap-3.5 rounded-[22px] border p-3.5 text-left backdrop-blur transition-shadow",
+        active && !locked
+          ? "border-[var(--lavender)] bg-white/85 shadow-[0_14px_36px_rgba(125,130,255,0.18)]"
+          : "border-white/70 bg-white/62 shadow-[0_10px_28px_rgba(10,12,19,0.05)]",
+        locked && "opacity-70",
+      )}
+    >
+      <span className={cx("flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px]", toneClasses(method.tone))}>
+        <Icon size={20} strokeWidth={1.9} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14.5px] font-bold leading-snug">{method.title}</span>
+        <span className="mt-0.5 block text-[12px] text-[var(--muted)]">{method.caption}</span>
+      </span>
+      {locked ? (
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-black/6 px-2.5 py-1 text-[10px] font-extrabold uppercase text-black/45">
+          <Lock size={11} /> Расшир.
+        </span>
+      ) : (
+        <span className="shrink-0 rounded-full bg-[var(--green-soft)] px-2.5 py-1 text-[10px] font-extrabold uppercase text-[var(--green-deep)]">
+          базовый
+        </span>
+      )}
+    </motion.button>
+  );
+}
+
+// Пошаговый конструктор ассистента. Онбординг добавляет вводный экран,
+// «новый чат» и «пересборка» стартуют сразу с выбора направления.
+function Wizard({
+  mode,
+  initialTopic,
+  onComplete,
+  onCancel,
+}: {
+  mode: "onboarding" | "new";
+  initialTopic?: TopicId;
+  onComplete: (topic: TopicId, method: MethodId) => void;
+  onCancel?: () => void;
+}) {
+  const [phase, setPhase] = useState<"intro" | "topic" | "method">(mode === "onboarding" ? "intro" : "topic");
+  const [topic, setTopic] = useState<TopicId | null>(initialTopic ?? null);
+
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto px-6 pb-[max(20px,env(safe-area-inset-bottom))] pt-[max(20px,env(safe-area-inset-top))]">
+      {(phase !== "intro" || onCancel) && (
+        <div className="flex shrink-0 items-center justify-between pb-4">
+          <button
+            type="button"
+            onClick={() => {
+              haptic();
+              if (phase === "method") setPhase("topic");
+              else if (phase === "topic" && mode === "onboarding") setPhase("intro");
+              else onCancel?.();
+            }}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/64 text-black/55"
+            aria-label="Назад"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          {phase !== "intro" && <Stepper step={phase === "topic" ? 1 : 2} />}
+          <span className="w-9" />
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
-        {step === 0 ? (
+        {phase === "intro" && (
           <motion.div
-            key="hello"
-            initial={{ opacity: 0, x: -24 }}
+            key="intro"
+            initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -24 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
             className="flex min-h-full flex-col"
           >
-            <div className="flex flex-col items-center text-center">
-              <Orb size={104} />
-              <h1 className="font-display mt-6 text-[28px] font-bold leading-[1.12]">
-                Ассистент, который
+            <div className="flex flex-col items-center pt-2 text-center">
+              <Orb size={100} />
+              <h1 className="font-display mt-6 text-[27px] font-bold leading-[1.12]">
+                Соберём ассистента
                 <br />
-                не поддакивает
+                под тебя
               </h1>
             </div>
-            <div className="mt-8 flex flex-col gap-2.5">
+            <div className="mt-7 flex flex-col gap-2.5">
               {welcomePoints.map((point, index) => {
                 const Icon = point.icon;
                 return (
                   <motion.div
                     key={point.title}
-                    initial={{ opacity: 0, y: 14 }}
+                    initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 + index * 0.09, duration: 0.32, ease: "easeOut" }}
+                    transition={{ delay: 0.12 + index * 0.09, duration: 0.3, ease: "easeOut" }}
                     className="flex items-center gap-3.5 rounded-[20px] border border-white/70 bg-white/60 px-4 py-3 backdrop-blur"
                   >
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-[var(--lavender-soft)] text-[var(--lavender-deep)]">
@@ -360,41 +501,83 @@ function Onboarding({ onDone }: { onDone: (approach: ApproachId) => void }) {
                 whileTap={{ scale: 0.97 }}
                 onClick={() => {
                   haptic("medium");
-                  setStep(1);
+                  setPhase("topic");
                 }}
                 className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--ink)] text-[15px] font-bold text-white shadow-[0_18px_44px_rgba(17,17,17,0.16)]"
               >
                 <Sparkles size={17} />
-                Дальше
+                Собрать
               </motion.button>
-              <p className="mt-3 text-center text-[11px] text-black/38">Не терапия и не медицинская помощь. В кризис — 112.</p>
+              <p className="mt-3 text-center text-[11px] text-black/38">Не терапия и не медпомощь. В кризис — 112.</p>
             </div>
           </motion.div>
-        ) : (
+        )}
+
+        {phase === "topic" && (
           <motion.div
-            key="approach"
-            initial={{ opacity: 0, x: 24 }}
+            key="topic"
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 24 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
             className="flex min-h-full flex-col"
           >
-            <h1 className="font-display text-[26px] font-bold leading-[1.15]">С каким подходом начнём?</h1>
-            <p className="mt-2 text-[13px] leading-relaxed text-[var(--muted)]">
-              От этого зависит, как ассистент поведёт разговор. Поменять можно в любой момент.
+            <p className="text-[11px] font-extrabold uppercase tracking-wide text-[var(--lavender-deep)]">Шаг 1 · направление</p>
+            <h1 className="font-display mt-1.5 text-[24px] font-bold leading-[1.15]">О чём хочешь поговорить?</h1>
+            <p className="mt-2 text-[12.5px] leading-relaxed text-[var(--muted)]">
+              По теме подберём подходящую базу материалов и фокус разговора.
             </p>
-            <div className="mt-6 flex flex-col gap-2.5">
-              {approaches.map((approach, index) => (
-                <ApproachCard key={approach.id} approach={approach} delay={0.1 + index * 0.08} onPick={onDone} />
+            <div className="mt-5 flex flex-col gap-2.5 pb-4">
+              {topics.map((item, index) => (
+                <TopicRow
+                  key={item.id}
+                  topic={item}
+                  active={topic === item.id}
+                  delay={0.06 + index * 0.05}
+                  onPick={(id) => {
+                    setTopic(id);
+                    setPhase("method");
+                  }}
+                />
               ))}
             </div>
-            <button
-              type="button"
-              onClick={() => setStep(0)}
-              className="mt-auto pt-6 text-center text-[12.5px] font-bold text-black/40"
-            >
-              ← назад
-            </button>
+          </motion.div>
+        )}
+
+        {phase === "method" && topic && (
+          <motion.div
+            key="method"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
+            className="flex min-h-full flex-col"
+          >
+            <p className="text-[11px] font-extrabold uppercase tracking-wide text-[var(--lavender-deep)]">Шаг 2 · метод</p>
+            <h1 className="font-display mt-1.5 text-[24px] font-bold leading-[1.15]">Как будем работать?</h1>
+            <p className="mt-2 text-[12.5px] leading-relaxed text-[var(--muted)]">
+              Метод определяет стиль ответов. В базовой версии открыта КПТ.
+            </p>
+            <div className="mt-5 flex flex-col gap-2.5">
+              {methods.map((item, index) => {
+                const locked = item.premium && !PREMIUM_UNLOCKED;
+                return (
+                  <MethodRow
+                    key={item.id}
+                    method={item}
+                    locked={locked}
+                    delay={0.06 + index * 0.05}
+                    onPick={(id, isLocked) => {
+                      if (isLocked) return;
+                      onComplete(topic, id);
+                    }}
+                  />
+                );
+              })}
+            </div>
+            <p className="mt-4 rounded-[18px] border border-[var(--sun-soft)] bg-[var(--sun-soft)] px-4 py-3 text-center text-[11.5px] font-semibold leading-relaxed text-[var(--sun-deep)]">
+              Психоанализ, гештальт и позитивная терапия появятся в расширенной версии.
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -419,7 +602,7 @@ function SheetShell({ title, onClose, children }: { title: string; onClose: () =
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", stiffness: 380, damping: 38 }}
-        className="relative max-h-[78%] overflow-y-auto rounded-t-[30px] border-t border-white/80 bg-[var(--app)]/97 px-6 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_60px_rgba(10,12,19,0.18)] backdrop-blur-2xl"
+        className="relative max-h-[80%] overflow-y-auto rounded-t-[30px] border-t border-white/80 bg-[var(--app)]/97 px-6 pb-[max(20px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_60px_rgba(10,12,19,0.18)] backdrop-blur-2xl"
       >
         <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-black/12" />
         <div className="mb-4 flex items-center justify-between">
@@ -433,9 +616,11 @@ function SheetShell({ title, onClose, children }: { title: string; onClose: () =
 }
 
 export default function App() {
-  const [introSeen, setIntroSeen] = useState(() => localStorage.getItem("psy_intro_v3") === "1");
   const [chats, setChats] = useState<Chat[]>(loadChats);
   const [currentId, setCurrentId] = useState<string | null>(() => localStorage.getItem("psy_current_chat"));
+  const [wizardMode, setWizardMode] = useState<"onboarding" | "new" | null>(() =>
+    localStorage.getItem("psy_intro_v3") === "1" && chats.length ? null : "onboarding",
+  );
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [sheet, setSheet] = useState<Sheet>("none");
@@ -443,7 +628,8 @@ export default function App() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const chat = chats.find((c) => c.id === currentId) ?? chats[0] ?? null;
-  const approach = chat ? approachOf(chat.approach) : approaches[0];
+  const topic = chat ? topicOf(chat.topic) : topics[0];
+  const method = chat ? methodOf(chat.method) : methods[0];
 
   useEffect(() => {
     const tg = (window as TgWindow).Telegram?.WebApp;
@@ -465,19 +651,17 @@ export default function App() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat?.messages.length, thinking]);
 
-  function newChat(approachId: ApproachId) {
-    const fresh: Chat = { id: uid(), approach: approachId, title: "Новый разговор", messages: [], updatedAt: Date.now() };
+  function completeWizard(topicId: TopicId, methodId: MethodId) {
+    const fresh: Chat = { id: uid(), topic: topicId, method: methodId, title: "Новый разговор", messages: [], updatedAt: Date.now() };
     setChats((current) => [fresh, ...current].slice(0, 30));
     setCurrentId(fresh.id);
+    localStorage.setItem("psy_intro_v3", "1");
+    setWizardMode(null);
     setSheet("none");
   }
 
   function patchChat(id: string, patch: (c: Chat) => Chat) {
-    setChats((current) =>
-      current
-        .map((c) => (c.id === id ? patch(c) : c))
-        .sort((a, b) => b.updatedAt - a.updatedAt),
-    );
+    setChats((current) => current.map((c) => (c.id === id ? patch(c) : c)).sort((a, b) => b.updatedAt - a.updatedAt));
   }
 
   function deleteChat(id: string) {
@@ -507,7 +691,7 @@ export default function App() {
       haptic("medium");
     } catch (error) {
       const kind = error instanceof Error ? error.message : "network";
-      const text =
+      const message =
         kind === "daily_limit"
           ? "На сегодня лимит сообщений закончился — это защита от перегрузки. Возвращайся завтра. Если тяжело прямо сейчас: 112 или 8-800-2000-122."
           : kind === "global_limit"
@@ -516,16 +700,13 @@ export default function App() {
       if (kind === "daily_limit") setRemaining(0);
       patchChat(chat.id, (c) => ({
         ...c,
-        messages: [...c.messages, { id: uid(), role: "assistant", text, system: true }],
+        messages: [...c.messages, { id: uid(), role: "assistant", text: message, system: true }],
         updatedAt: Date.now(),
       }));
     } finally {
       setThinking(false);
     }
   }
-
-  const showOnboarding = !introSeen;
-  const noChat = !chat;
 
   return (
     <div className="min-h-screen overflow-x-clip bg-[var(--page)] text-[var(--ink)] sm:flex sm:items-center sm:justify-center sm:p-6">
@@ -535,29 +716,23 @@ export default function App() {
         <div className="pointer-events-none absolute bottom-8 right-10 h-44 w-44 rounded-full bg-[var(--siri-violet)]/11 blur-3xl" />
 
         <div className="relative z-10 flex min-h-0 min-w-0 flex-1 flex-col">
-          {showOnboarding || noChat ? (
-            <Onboarding
-              onDone={(approachId) => {
-                localStorage.setItem("psy_intro_v3", "1");
-                setIntroSeen(true);
-                newChat(approachId);
-              }}
+          {wizardMode || !chat ? (
+            <Wizard
+              mode={wizardMode ?? "onboarding"}
+              onComplete={completeWizard}
+              onCancel={wizardMode === "new" && chat ? () => setWizardMode(null) : undefined}
             />
           ) : (
             <>
               <header className="flex shrink-0 items-center justify-between gap-3 px-5 pb-2 pt-[max(16px,env(safe-area-inset-top))]">
                 <div className="flex min-w-0 items-center gap-3">
                   <Orb thinking={thinking} size={44} />
-                  <div className="min-w-0">
-                    <p className="font-display truncate text-[17px] font-bold leading-tight">AI-психолог</p>
-                    <button
-                      type="button"
-                      onClick={() => setSheet("approach")}
-                      className="mt-0.5 flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wide text-black/36"
-                    >
-                      {thinking ? "подбираю ответ…" : `${approach.title} · сменить`}
-                    </button>
-                  </div>
+                  <button type="button" onClick={() => setSheet("config")} className="min-w-0 text-left">
+                    <p className="font-display truncate text-[16px] font-bold leading-tight">{topic.title}</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-wide text-black/36">
+                      {thinking ? "подбираю ответ…" : `${method.title} · настроить`}
+                    </p>
+                  </button>
                 </div>
                 <div className="flex gap-2">
                   <IconButton icon={History} label="История чатов" onClick={() => setSheet("history")} />
@@ -569,7 +744,7 @@ export default function App() {
                 <div className="flex flex-col gap-3">
                   <div className="flex justify-start">
                     <div className="max-w-[86%] rounded-[22px] rounded-bl-[8px] border border-white/70 bg-white/64 px-4 py-3 text-[14px] leading-relaxed backdrop-blur">
-                      {approach.greeting}
+                      {method.greet(topic.title.toLowerCase())}
                     </div>
                   </div>
 
@@ -664,9 +839,7 @@ export default function App() {
           <AnimatePresence>
             {sheet === "techniques" && (
               <SheetShell title="Техники" onClose={() => setSheet("none")}>
-                <p className="mb-4 text-[12.5px] leading-relaxed text-[var(--muted)]">
-                  Ассистент проведёт по шагам прямо в чате.
-                </p>
+                <p className="mb-4 text-[12.5px] leading-relaxed text-[var(--muted)]">Ассистент проведёт по шагам прямо в чате.</p>
                 <div className="flex flex-col gap-2.5">
                   {techniques.map((technique) => {
                     const Icon = technique.icon;
@@ -699,17 +872,18 @@ export default function App() {
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
                     haptic();
-                    setSheet("approach");
+                    setSheet("none");
+                    setWizardMode("new");
                   }}
                   className="mb-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--ink)] text-[14px] font-bold text-white shadow-[0_14px_34px_rgba(10,12,19,0.16)]"
                 >
                   <Plus size={16} />
-                  Новый чат
+                  Собрать новый чат
                 </motion.button>
                 <div className="flex flex-col gap-2">
                   {chats.map((item) => {
-                    const itemApproach = approachOf(item.approach);
-                    const Icon = itemApproach.icon;
+                    const itemTopic = topicOf(item.topic);
+                    const Icon = itemTopic.icon;
                     return (
                       <div
                         key={item.id}
@@ -727,13 +901,13 @@ export default function App() {
                           }}
                           className="flex min-w-0 flex-1 items-center gap-3 text-left"
                         >
-                          <span className={cx("flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px]", toneClasses(itemApproach.tone))}>
+                          <span className={cx("flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px]", toneClasses(itemTopic.tone))}>
                             <Icon size={17} strokeWidth={1.9} />
                           </span>
                           <span className="min-w-0">
                             <span className="block truncate text-[13.5px] font-bold">{item.title}</span>
                             <span className="block text-[11.5px] text-[var(--muted)]">
-                              {itemApproach.title} · {formatDay(item.updatedAt)}
+                              {itemTopic.title} · {methodOf(item.method).title} · {formatDay(item.updatedAt)}
                             </span>
                           </span>
                         </button>
@@ -748,23 +922,56 @@ export default function App() {
                       </div>
                     );
                   })}
-                  {chats.length === 0 && (
-                    <p className="py-4 text-center text-[12.5px] text-[var(--muted)]">Пока пусто — начни новый чат.</p>
-                  )}
+                  {chats.length === 0 && <p className="py-4 text-center text-[12.5px] text-[var(--muted)]">Пока пусто — собери новый чат.</p>}
                 </div>
               </SheetShell>
             )}
 
-            {sheet === "approach" && (
-              <SheetShell title="Новый чат: подход" onClose={() => setSheet("none")}>
-                <p className="mb-4 text-[12.5px] leading-relaxed text-[var(--muted)]">
-                  Подход определяет, как ассистент поведёт разговор. Для текущего чата подход сохраняется — новый выбор откроет новый чат.
-                </p>
-                <div className="flex flex-col gap-2.5">
-                  {approaches.map((item) => (
-                    <ApproachCard key={item.id} approach={item} active={item.id === chat?.approach} onPick={newChat} />
+            {sheet === "config" && chat && (
+              <SheetShell title="Настроить ассистента" onClose={() => setSheet("none")}>
+                <p className="text-[11px] font-extrabold uppercase tracking-wide text-[var(--lavender-deep)]">Направление</p>
+                <div className="mt-2.5 flex flex-col gap-2">
+                  {topics.map((item) => (
+                    <TopicRow
+                      key={item.id}
+                      topic={item}
+                      active={chat.topic === item.id}
+                      onPick={(id) => {
+                        patchChat(chat.id, (c) => ({ ...c, topic: id, updatedAt: Date.now() }));
+                        haptic();
+                      }}
+                    />
                   ))}
                 </div>
+                <p className="mt-5 text-[11px] font-extrabold uppercase tracking-wide text-[var(--lavender-deep)]">Метод</p>
+                <div className="mt-2.5 flex flex-col gap-2">
+                  {methods.map((item) => {
+                    const locked = item.premium && !PREMIUM_UNLOCKED;
+                    return (
+                      <MethodRow
+                        key={item.id}
+                        method={item}
+                        active={chat.method === item.id}
+                        locked={locked}
+                        onPick={(id, isLocked) => {
+                          if (isLocked) return;
+                          patchChat(chat.id, (c) => ({ ...c, method: id, updatedAt: Date.now() }));
+                          haptic();
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                <p className="mt-4 rounded-[18px] border border-[var(--sun-soft)] bg-[var(--sun-soft)] px-4 py-3 text-center text-[11.5px] font-semibold leading-relaxed text-[var(--sun-deep)]">
+                  Другие методы откроются в расширенной версии.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSheet("none")}
+                  className="mt-3 min-h-12 w-full rounded-full bg-[var(--ink)] text-[14px] font-bold text-white shadow-[0_14px_34px_rgba(10,12,19,0.16)]"
+                >
+                  Готово
+                </button>
               </SheetShell>
             )}
 
@@ -788,6 +995,25 @@ export default function App() {
                   </p>
                 </div>
 
+                {chat && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      haptic();
+                      setSheet("config");
+                    }}
+                    className="mt-3 flex w-full items-center justify-between rounded-[22px] border border-white/70 bg-white/70 p-4 text-left shadow-[0_10px_28px_rgba(10,12,19,0.05)]"
+                  >
+                    <span>
+                      <span className="block text-[13px] font-bold">Настройка ассистента</span>
+                      <span className="mt-0.5 block text-[12px] text-[var(--muted)]">
+                        {topic.title} · {method.title}
+                      </span>
+                    </span>
+                    <SlidersHorizontal size={18} className="text-black/40" />
+                  </button>
+                )}
+
                 <div className="mt-3 rounded-[22px] border border-[var(--pink-soft)] bg-[var(--pink-soft)] p-4">
                   <p className="text-[13px] font-bold text-[var(--pink-deep)]">Если совсем тяжело</p>
                   <p className="mt-1.5 text-[12.5px] leading-relaxed text-[var(--ink)]/75">
@@ -801,13 +1027,13 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     haptic();
-                    setSheet("none");
-                    setIntroSeen(false);
                     localStorage.removeItem("psy_intro_v3");
+                    setSheet("none");
+                    setWizardMode("onboarding");
                   }}
                   className="mt-3 min-h-11 w-full rounded-full bg-white/80 text-[13.5px] font-bold text-[var(--ink)] shadow-[0_8px_22px_rgba(10,12,19,0.05)]"
                 >
-                  Посмотреть знакомство ещё раз
+                  Пройти знакомство заново
                 </button>
 
                 <p className="mt-4 text-center text-[11px] leading-relaxed text-black/36">
