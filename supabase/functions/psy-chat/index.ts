@@ -36,6 +36,14 @@ const SYSTEM_PROMPT = `Ты — ассистент бережной психол
 - Живой специалист важнее любого чата — мягко напоминай об этом, когда уместно.
 - Если человек пишет о желании умереть, самоповреждении или насилии — прекрати обычный диалог: признай тяжесть, скажи, что он не один, направь к экстренной помощи (112, телефон доверия 8-800-2000-122) и к живому человеку рядом.`;
 
+// Выбранный пользователем подход определяет, КАК ассистент ведёт разговор.
+const APPROACH_PROMPTS: Record<string, string> = {
+  cbt: `Выбранный подход: КПТ. Работай по протоколам когнитивно-поведенческой терапии: помогай замечать автоматические мысли, называть когнитивные искажения, проверять мысли фактами через сократический диалог. Предлагай структурированные упражнения — дневник мыслей СМЭР, поведенческие эксперименты, шкалирование тревоги 0–10. Веди протоколы по шагам, по одному шагу за сообщение.`,
+  psycho: `Выбранный подход: психоанализ. Работай в психоаналитическом ключе: свободные ассоциации, повторяющиеся паттерны, детский опыт, сны, защитные механизмы. Не давай протоколов и упражнений — исследуй связи и предлагай интерпретации осторожно, как гипотезы («возможно…», «как будто…»), оставляя человеку право не согласиться.`,
+  gestalt: `Выбранный подход: гештальт. Фокус на «здесь и сейчас», чувствах и телесных ощущениях, неудовлетворённых потребностях. Помогай переводить рассказ о событиях в контакт с переживанием («что ты чувствуешь, когда говоришь это?»), предлагай эксперименты: пустой стул, усиление чувства, я-высказывания.`,
+  mindful: `Выбранный подход: ACT и майндфулнес. Работай через принятие и осознанность: помогай замечать мысли на расстоянии (когнитивная разделённость), возвращаться к дыханию и телу, опираться на ценности и делать маленькие шаги в их сторону. Предлагай короткие практики осознанности по шагам.`,
+};
+
 const CRISIS_REPLY = `Мне важно, что ты написал об этом — на такое нужна смелость.
 
 Похоже, тебе сейчас по-настоящему тяжело. С таким состоянием не стоит оставаться один на один, и честнее сказать прямо: я ассистент, и моих возможностей здесь мало.
@@ -109,7 +117,7 @@ async function sha256(text: string): Promise<string> {
     .join("");
 }
 
-async function callGroq(messages: ChatMessage[]): Promise<string> {
+async function callGroq(system: string, messages: ChatMessage[]): Promise<string> {
   const apiKey = Deno.env.get("PSY_GROQ_API_KEY") || Deno.env.get("GROQ_API_KEY");
   if (!apiKey) throw new Error("Groq API key is not configured");
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -119,7 +127,7 @@ async function callGroq(messages: ChatMessage[]): Promise<string> {
       model: MODEL,
       temperature: 0.6,
       max_tokens: 400,
-      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+      messages: [{ role: "system", content: system }, ...messages],
     }),
   });
   if (!response.ok) {
@@ -148,6 +156,10 @@ Deno.serve(async (req) => {
     } catch {
       return json(req, { error: "Invalid JSON" }, 400);
     }
+
+    const bodyApproach = (body as { approach?: unknown }).approach;
+    const approach = typeof bodyApproach === "string" && bodyApproach in APPROACH_PROMPTS ? bodyApproach : "cbt";
+    const system = `${SYSTEM_PROMPT}\n\n${APPROACH_PROMPTS[approach]}`;
 
     const deviceId = typeof body.deviceId === "string" ? body.deviceId : "";
     if (!/^[a-z0-9-]{8,64}$/i.test(deviceId)) return json(req, { error: "Bad deviceId" }, 400);
@@ -187,7 +199,7 @@ Deno.serve(async (req) => {
     // Кэш типовых открывающих сообщений: короткая фраза в начале диалога.
     const norm = normalize(last.content);
     const cacheable = messages.length <= 2 && norm.length > 0 && norm.length <= 120;
-    const cacheKey = cacheable ? await sha256(`${MODEL}|${norm}`) : "";
+    const cacheKey = cacheable ? await sha256(`${MODEL}|${approach}|${norm}`) : "";
     if (cacheable) {
       const { data: hit } = await db.from("psy_cache").select("reply, hits").eq("key", cacheKey).maybeSingle();
       if (hit) {
@@ -202,7 +214,7 @@ Deno.serve(async (req) => {
     const totalToday = (dayRows ?? []).reduce((sum, r) => sum + (r.used ?? 0), 0);
     if (totalToday >= GLOBAL_DAILY_LIMIT) return json(req, { error: "global_limit", remaining: Math.max(0, DAILY_LIMIT - used) }, 429);
 
-    const reply = await callGroq(messages);
+    const reply = await callGroq(system, messages);
 
     await db.from("psy_usage").upsert({
       device_id: deviceId,
