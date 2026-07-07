@@ -5,4 +5,5 @@ preview-check.sh
 preview-test.sh
 check-static.mjs
 check-fix.mjs
+check-edits.mjs
 shots/

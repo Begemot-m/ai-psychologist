@@ -69,11 +69,16 @@ export function ProfileScreen({
           В кризисных ситуациях, пожалуйста, обращайся за помощью к специалистам.
         </p>
         <a
-          href="tel:88002000122"
-          className="mt-3 flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-[13px] font-semibold text-[#111111]"
+          href="tel:88002501859"
+          className="mt-3 flex flex-col gap-0.5 rounded-2xl bg-white px-4 py-3"
         >
-          <PhoneCall size={15} className="text-[#FF6E8A]" />
-          Если тебе плохо прямо сейчас — 8&nbsp;800&nbsp;2000&nbsp;122
+          <span className="flex items-center gap-2 text-[13px] font-semibold text-[#111111]">
+            <PhoneCall size={15} className="text-[#FF6E8A]" />
+            Горячая линия первой психологической помощи Красного Креста
+          </span>
+          <span className="pl-[23px] text-[12px] text-[#111111]/55">
+            Бесплатно, круглосуточно — 8&nbsp;800&nbsp;250&nbsp;18&nbsp;59
+          </span>
         </a>
       </div>
     </div>

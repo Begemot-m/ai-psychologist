@@ -1,12 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --font-unbounded: "Unbounded", sans-serif;
-  --font-inter: "Inter", sans-serif;
+  --font-onest: "Onest", sans-serif;
 }
 
 body {
   margin: 0;
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-onest), sans-serif;
   color: #111111;
 }

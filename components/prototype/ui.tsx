@@ -113,7 +113,7 @@ export function Dots({ count, active }: { count: number; active: number }) {
 
 export function ScreenTitle({ children }: { children: ReactNode }) {
   return (
-    <h1 className="font-[var(--font-unbounded)] text-[28px] font-bold leading-tight text-[#111111]">
+    <h1 className="text-[28px] font-extrabold leading-[1.1] tracking-[-0.03em] text-[#111111]">
       {children}
     </h1>
   );

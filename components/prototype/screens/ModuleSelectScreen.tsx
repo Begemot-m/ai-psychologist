@@ -19,7 +19,8 @@ export function ModuleSelectScreen({
       </p>
       <ScreenTitle>С чем хочешь поработать?</ScreenTitle>
       <p className="mt-2 text-[14px] text-[#111111]/55">
-        Выбери, что сейчас откликается больше всего
+        Выбери, что сейчас откликается больше всего. Позже можно создать новый чат по другой теме —
+        если пока не получается определиться с несколькими направлениями.
       </p>
 
       <div className="mt-6 grid flex-1 grid-cols-2 gap-3 overflow-y-auto pb-2">

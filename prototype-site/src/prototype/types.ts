@@ -8,11 +8,39 @@ export type Screen =
 
 export type Tab = "chat" | "programs" | "profile";
 
-export interface OnboardingSlide {
+export interface OnboardingIntroSlide {
+  kind: "intro";
+  icon: LucideIcon;
   title: string;
   text: string;
-  icon: LucideIcon;
 }
+
+export interface OnboardingCompareSlide {
+  kind: "compare";
+  title: string;
+  subtitle: string;
+  cons: string[];
+  pros: string[];
+  privacyNote: string;
+}
+
+export interface OnboardingFeature {
+  icon: LucideIcon;
+  title: string;
+  text: string;
+}
+
+export interface OnboardingFeaturesSlide {
+  kind: "features";
+  title: string;
+  subtitle: string;
+  features: OnboardingFeature[];
+}
+
+export type OnboardingSlide =
+  | OnboardingIntroSlide
+  | OnboardingCompareSlide
+  | OnboardingFeaturesSlide;
 
 export interface ModuleItem {
   id: string;

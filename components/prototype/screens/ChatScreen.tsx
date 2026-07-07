@@ -38,7 +38,7 @@ export function ChatScreen({
     {
       id: nextId(),
       role: "assistant",
-      text: `Привет! Я рядом, и то, что ты сейчас здесь — это уже шаг. Мы выбрали модуль «${moduleTitle}» и подход «${methodTitle}». Расскажи, что происходит?`,
+      text: `Здравствуй. Хорошо, что ты здесь. Мы будем работать с темой «${moduleTitle}» в подходе «${methodTitle}» — я рядом и никуда не тороплюсь. Пусть это будет спокойное место, где можно говорить как есть.`,
     },
   ]);
   const [userMessageCount, setUserMessageCount] = useState(0);
