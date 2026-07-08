@@ -7,7 +7,9 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Brain,
+  Check,
   ChevronLeft,
+  ChevronRight,
   Compass,
   Flame,
   Flower2,
@@ -59,7 +61,7 @@ const methods: Array<{
   icon: LucideIcon;
   tone: Tone;
   premium: boolean;
-  greet: (topicLower: string) => string;
+  greet: string;
 }> = [
   {
     id: "cbt",
@@ -68,8 +70,7 @@ const methods: Array<{
     icon: Brain,
     tone: "lavender",
     premium: false,
-    greet: (t) =>
-      `Я рядом. Тема — ${t}. Будем работать по КПТ: замечать мысли, проверять их на факты и пробовать маленькие шаги. С чего хочется начать?`,
+    greet: "Здравствуй. Я рядом. Это спокойное место, где можно говорить открыто — без спешки и осуждения.",
   },
   {
     id: "psycho",
@@ -78,7 +79,7 @@ const methods: Array<{
     icon: Orbit,
     tone: "pink",
     premium: true,
-    greet: (t) => `Я рядом. Тема — ${t}. Пойдём вглубь без спешки: ассоциации, повторяющиеся сюжеты. С чего начнём?`,
+    greet: "Здравствуй. Я рядом. Здесь можно не подбирать слова — говори так, как идёт.",
   },
   {
     id: "gestalt",
@@ -87,7 +88,7 @@ const methods: Array<{
     icon: Flower2,
     tone: "green",
     premium: true,
-    greet: (t) => `Я рядом. Тема — ${t}. Замедлимся и заметим, что с тобой прямо сейчас. Что откликается первым?`,
+    greet: "Здравствуй. Я рядом. Давай просто побудем здесь вместе — без всякого «надо».",
   },
   {
     id: "positive",
@@ -96,7 +97,7 @@ const methods: Array<{
     icon: Sun,
     tone: "sun",
     premium: true,
-    greet: (t) => `Я рядом. Тема — ${t}. Начнём с опоры на твои ресурсы и сильные стороны. Что сейчас волнует больше всего?`,
+    greet: "Здравствуй. Я рядом. Рад, что ты заглянул — это уже забота о себе.",
   },
 ];
 
@@ -104,10 +105,41 @@ const methods: Array<{
 const PREMIUM_UNLOCKED = false;
 
 const welcomePoints: Array<{ icon: LucideIcon; title: string; caption: string }> = [
-  { icon: ShieldCheck, title: "Не поддакивает", caption: "сначала уточнит, потом ответит" },
-  { icon: Sparkles, title: "Собирается под тебя", caption: "тема и метод — твой выбор" },
-  { icon: HeartHandshake, title: "Сопровождает, не указывает", caption: "методики из клинических руководств" },
+  {
+    icon: ShieldCheck,
+    title: "Не поддакивает",
+    caption:
+      "Бот чётко понимает границы: где стоит согласиться, а где — прекратить поддакивать. Любая нейросеть рано или поздно начинает выдавать ответ, который вы хотите услышать.",
+  },
+  {
+    icon: Sparkles,
+    title: "Собирается под тебя",
+    caption:
+      "Кроме темы разговора можно выбрать метод работы — по протоколам современных методик из клинических руководств.",
+  },
+  {
+    icon: HeartHandshake,
+    title: "Сопровождает, а не учит жизни",
+    caption:
+      "Бот помогает быстро понять своё состояние и даёт техники самопомощи, но не заменяет реальную психотерапию.",
+  },
 ];
+
+// Экран сравнения на онбординге: чем ассистент отличается от обычного чат-бота.
+const comparison = {
+  generic: [
+    "Поддакивает, чтобы понравиться",
+    "Сыплет советами, не разобравшись",
+    "Не отличает поддержку от кризиса",
+    "Учился на всём подряд из интернета",
+  ],
+  ours: [
+    "Знает, где поддержать, а где остановиться",
+    "Сначала помогает понять состояние",
+    "Встроенный кризисный протокол и границы",
+    "Опирается на клинические руководства",
+  ],
+};
 
 const starterChips = ["Мне тревожно", "Не могу уснуть", "Всё раздражает", "Просто поговорить"];
 
@@ -417,8 +449,11 @@ function MethodRow({
   );
 }
 
-// Пошаговый конструктор ассистента. Онбординг добавляет вводный экран,
+// Пошаговый конструктор ассистента. В онбординге перед конструктором идут
+// три знакомящих слайда (приветствие → отличия → «соберём под тебя»);
 // «новый чат» и «пересборка» стартуют сразу с выбора направления.
+type Phase = "welcome" | "compare" | "intro" | "topic" | "method";
+
 function Wizard({
   mode,
   initialTopic,
@@ -430,50 +465,149 @@ function Wizard({
   onComplete: (topic: TopicId, method: MethodId) => void;
   onCancel?: () => void;
 }) {
-  const [phase, setPhase] = useState<"intro" | "topic" | "method">(mode === "onboarding" ? "intro" : "topic");
+  const [phase, setPhase] = useState<Phase>(mode === "onboarding" ? "welcome" : "topic");
   const [topic, setTopic] = useState<TopicId | null>(initialTopic ?? null);
 
+  const isConstructor = phase === "topic" || phase === "method";
+  const showBar = phase !== "welcome" || !!onCancel;
+
+  function goBack() {
+    haptic();
+    if (phase === "method") setPhase("topic");
+    else if (phase === "topic") mode === "onboarding" ? setPhase("intro") : onCancel?.();
+    else if (phase === "intro") setPhase("compare");
+    else if (phase === "compare") setPhase("welcome");
+    else onCancel?.();
+  }
+
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto px-6 pb-[max(20px,env(safe-area-inset-bottom))] pt-[max(20px,env(safe-area-inset-top))]">
-      {(phase !== "intro" || onCancel) && (
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto px-6 pb-[max(20px,env(safe-area-inset-bottom))] pt-[max(18px,env(safe-area-inset-top))]">
+      {showBar && (
         <div className="flex shrink-0 items-center justify-between pb-4">
           <button
             type="button"
-            onClick={() => {
-              haptic();
-              if (phase === "method") setPhase("topic");
-              else if (phase === "topic" && mode === "onboarding") setPhase("intro");
-              else onCancel?.();
-            }}
+            onClick={goBack}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/64 text-black/55"
             aria-label="Назад"
           >
             <ChevronLeft size={18} />
           </button>
-          {phase !== "intro" && <Stepper step={phase === "topic" ? 1 : 2} />}
+          {isConstructor && <Stepper step={phase === "topic" ? 1 : 2} />}
           <span className="w-9" />
         </div>
       )}
 
       <AnimatePresence mode="wait">
-        {phase === "intro" && (
+        {phase === "welcome" && (
           <motion.div
-            key="intro"
-            initial={{ opacity: 0, x: -20 }}
+            key="welcome"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.32, ease: "easeOut" }}
+            className="flex min-h-full flex-col"
+          >
+            <div className="flex flex-1 flex-col items-center justify-center pt-6 text-center">
+              <Orb size={116} />
+              <h1 className="font-display mt-8 text-[30px] font-semibold leading-[1.12]">Добрый день</h1>
+              <p className="mt-4 max-w-[300px] text-[14.5px] leading-relaxed text-[var(--ink)]/72">
+                Рады приветствовать в ИИ-ассистенте. Это чат-бот, созданный психологами для бережного
+                сопровождения — более безопасного, чем обычный чат вроде GPT или Claude.
+              </p>
+            </div>
+            <div className="mt-auto pt-8">
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  haptic("medium");
+                  setPhase("compare");
+                }}
+                className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--ink)] text-[15px] font-bold text-white shadow-[0_18px_44px_rgba(17,17,17,0.16)]"
+              >
+                Познакомиться
+                <ChevronRight size={17} />
+              </motion.button>
+              <p className="mt-3 text-center text-[11px] text-black/38">Не терапия и не медпомощь. В кризис — 112.</p>
+            </div>
+          </motion.div>
+        )}
+
+        {phase === "compare" && (
+          <motion.div
+            key="compare"
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.28, ease: "easeOut" }}
             className="flex min-h-full flex-col"
           >
-            <div className="flex flex-col items-center pt-2 text-center">
-              <Orb size={100} />
-              <h1 className="font-display mt-6 text-[27px] font-bold leading-[1.12]">
-                Соберём ассистента
-                <br />
-                под тебя
-              </h1>
+            <p className="text-[11px] font-extrabold uppercase tracking-wide text-[var(--lavender-deep)]">В чём разница</p>
+            <h1 className="font-display mt-1.5 text-[23px] font-semibold leading-[1.16]">
+              Почему здесь сложнее навредить себе
+            </h1>
+
+            <div className="mt-5 rounded-[24px] border border-black/8 bg-white/55 p-4 backdrop-blur">
+              <p className="mb-2.5 text-[12px] font-extrabold uppercase tracking-wide text-black/38">Обычный чат-бот</p>
+              <div className="flex flex-col gap-2.5">
+                {comparison.generic.map((line) => (
+                  <div key={line} className="flex items-start gap-2.5">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--pink-soft)] text-[var(--pink-deep)]">
+                      <X size={13} strokeWidth={2.6} />
+                    </span>
+                    <span className="text-[13px] leading-snug text-[var(--ink)]/70">{line}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="mt-7 flex flex-col gap-2.5">
+
+            <div className="mt-3 rounded-[24px] border border-[var(--lavender)]/35 bg-white/80 p-4 shadow-[0_14px_36px_rgba(125,130,255,0.14)] backdrop-blur">
+              <p className="mb-2.5 flex items-center gap-1.5 text-[12px] font-extrabold uppercase tracking-wide text-[var(--lavender-deep)]">
+                <ShieldCheck size={14} /> Этот ассистент
+              </p>
+              <div className="flex flex-col gap-2.5">
+                {comparison.ours.map((line) => (
+                  <div key={line} className="flex items-start gap-2.5">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--green-soft)] text-[var(--green-deep)]">
+                      <Check size={13} strokeWidth={2.8} />
+                    </span>
+                    <span className="text-[13px] font-semibold leading-snug text-[var(--ink)]/85">{line}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-auto pt-6">
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  haptic("medium");
+                  setPhase("intro");
+                }}
+                className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--ink)] text-[15px] font-bold text-white shadow-[0_18px_44px_rgba(17,17,17,0.16)]"
+              >
+                Дальше
+                <ChevronRight size={17} />
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+
+        {phase === "intro" && (
+          <motion.div
+            key="intro"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
+            className="flex min-h-full flex-col"
+          >
+            <h1 className="font-display text-[24px] font-semibold leading-[1.16]">Соберём ассистента под тебя</h1>
+            <p className="mt-2 text-[13px] leading-relaxed text-[var(--muted)]">
+              С помощью конструктора можно точечно начать работу именно с твоей ситуацией.
+            </p>
+            <div className="mt-5 flex flex-col gap-2.5">
               {welcomePoints.map((point, index) => {
                 const Icon = point.icon;
                 return (
@@ -481,21 +615,28 @@ function Wizard({
                     key={point.title}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.12 + index * 0.09, duration: 0.3, ease: "easeOut" }}
-                    className="flex items-center gap-3.5 rounded-[20px] border border-white/70 bg-white/60 px-4 py-3 backdrop-blur"
+                    transition={{ delay: 0.1 + index * 0.09, duration: 0.3, ease: "easeOut" }}
+                    className="flex items-start gap-3.5 rounded-[20px] border border-white/70 bg-white/60 px-4 py-3.5 backdrop-blur"
                   >
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-[var(--lavender-soft)] text-[var(--lavender-deep)]">
                       <Icon size={18} strokeWidth={1.9} />
                     </span>
                     <span className="min-w-0">
                       <span className="block text-[14px] font-bold leading-snug">{point.title}</span>
-                      <span className="block text-[12px] text-[var(--muted)]">{point.caption}</span>
+                      <span className="mt-0.5 block text-[12px] leading-relaxed text-[var(--muted)]">{point.caption}</span>
                     </span>
                   </motion.div>
                 );
               })}
             </div>
-            <div className="mt-auto pt-8">
+            <div className="mt-3 flex items-start gap-2.5 rounded-[18px] bg-[var(--green-soft)] px-4 py-3">
+              <Lock size={15} className="mt-0.5 shrink-0 text-[var(--green-deep)]" />
+              <p className="text-[11.5px] leading-relaxed text-[var(--ink)]/72">
+                Анонимно и конфиденциально: без регистрации. Переписка идёт по зашифрованному соединению и хранится
+                только на твоём устройстве — чтобы помнить контекст диалога. Любой чат можно удалить в один тап.
+              </p>
+            </div>
+            <div className="mt-auto pt-6">
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.97 }}
@@ -506,9 +647,8 @@ function Wizard({
                 className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--ink)] text-[15px] font-bold text-white shadow-[0_18px_44px_rgba(17,17,17,0.16)]"
               >
                 <Sparkles size={17} />
-                Собрать
+                Собрать ассистента
               </motion.button>
-              <p className="mt-3 text-center text-[11px] text-black/38">Не терапия и не медпомощь. В кризис — 112.</p>
             </div>
           </motion.div>
         )}
@@ -523,9 +663,10 @@ function Wizard({
             className="flex min-h-full flex-col"
           >
             <p className="text-[11px] font-extrabold uppercase tracking-wide text-[var(--lavender-deep)]">Шаг 1 · направление</p>
-            <h1 className="font-display mt-1.5 text-[24px] font-bold leading-[1.15]">О чём хочешь поговорить?</h1>
+            <h1 className="font-display mt-1.5 text-[24px] font-semibold leading-[1.15]">О чём хочешь поговорить?</h1>
             <p className="mt-2 text-[12.5px] leading-relaxed text-[var(--muted)]">
-              По теме подберём подходящую базу материалов и фокус разговора.
+              По теме подберём подходящую базу материалов и фокус разговора. Позже можно создать новый чат по другой
+              теме — если сейчас сложно выбрать одно направление.
             </p>
             <div className="mt-5 flex flex-col gap-2.5 pb-4">
               {topics.map((item, index) => (
@@ -693,7 +834,7 @@ export default function App() {
       const kind = error instanceof Error ? error.message : "network";
       const message =
         kind === "daily_limit"
-          ? "На сегодня лимит сообщений закончился — это защита от перегрузки. Возвращайся завтра. Если тяжело прямо сейчас: 112 или 8-800-2000-122."
+          ? "На сегодня лимит сообщений закончился — это защита от перегрузки. Возвращайся завтра. Если тяжело прямо сейчас: 112 или горячая линия Красного Креста 8 800 250-18-59 (10:00–21:00 мск)."
           : kind === "global_limit"
             ? "Сервису сейчас пишет слишком много людей, и дневной запас генераций исчерпан. Попробуй чуть позже."
             : "Не получилось связаться с сервером. Проверь интернет и попробуй ещё раз.";
@@ -744,7 +885,7 @@ export default function App() {
                 <div className="flex flex-col gap-3">
                   <div className="flex justify-start">
                     <div className="max-w-[86%] rounded-[22px] rounded-bl-[8px] border border-white/70 bg-white/64 px-4 py-3 text-[14px] leading-relaxed backdrop-blur">
-                      {method.greet(topic.title.toLowerCase())}
+                      {method.greet}
                     </div>
                   </div>
 
@@ -1019,7 +1160,8 @@ export default function App() {
                   <p className="mt-1.5 text-[12.5px] leading-relaxed text-[var(--ink)]/75">
                     Экстренная помощь — <b>112</b>
                     <br />
-                    Телефон доверия (бесплатно, круглосуточно) — <b>8-800-2000-122</b>
+                    Горячая линия первой психологической помощи Красного Креста (бесплатно) —{" "}
+                    <b>8 800 250-18-59</b>, ежедневно 10:00–21:00 мск
                   </p>
                 </div>
 
@@ -1035,6 +1177,14 @@ export default function App() {
                 >
                   Пройти знакомство заново
                 </button>
+
+                <div className="mt-3 flex items-start gap-2.5 rounded-[18px] bg-[var(--green-soft)] px-4 py-3">
+                  <Lock size={15} className="mt-0.5 shrink-0 text-[var(--green-deep)]" />
+                  <p className="text-[11.5px] leading-relaxed text-[var(--ink)]/72">
+                    Анонимно, без регистрации. Переписка хранится только на этом устройстве, чтобы помнить контекст, —
+                    и удаляется, как только ты удалишь чат.
+                  </p>
+                </div>
 
                 <p className="mt-4 text-center text-[11px] leading-relaxed text-black/36">
                   Ассистент не ставит диагнозы и не заменяет работу с живым специалистом.

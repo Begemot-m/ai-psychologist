@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Wix+Madefor+Display:wght@500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400..700&family=Onest:wght@400..800&display=swap");
 @import "tailwindcss";
 @source "./page.tsx";
 @source "./layout.tsx";
@@ -30,15 +30,15 @@
   --siri-blue: #6d7cff;
   --siri-violet: #b27aff;
   --siri-rose: #ff85ca;
-  --font-manrope: "Manrope";
-  --font-wix-display: "Wix Madefor Display";
+  --font-body: "Onest";
+  --font-display: "Literata";
 }
 
 @theme inline {
   --color-background: var(--app);
   --color-foreground: var(--ink);
-  --font-sans: var(--font-manrope);
-  --font-serif: var(--font-wix-display);
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-display);
 }
 
 * {
@@ -56,8 +56,8 @@ body {
     radial-gradient(circle at 92% 84%, rgba(178, 122, 255, 0.14), transparent 32%),
     linear-gradient(145deg, #f8f9fd 0%, #eceff7 100%);
   color: var(--ink);
-  font-family: var(--font-manrope), Arial, Helvetica, sans-serif;
-  letter-spacing: 0;
+  font-family: var(--font-body), system-ui, Arial, Helvetica, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 button,
@@ -73,16 +73,17 @@ button {
 h1,
 h2,
 h3 {
-  font-family: var(--font-wix-display), Arial, Helvetica, sans-serif;
-  letter-spacing: 0;
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  letter-spacing: -0.02em;
 }
 
 .font-display {
-  font-family: var(--font-wix-display), Arial, Helvetica, sans-serif;
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  letter-spacing: -0.02em;
 }
 
 .font-ui {
-  font-family: var(--font-manrope), Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), system-ui, Arial, Helvetica, sans-serif;
 }
 
 .luxury-grain::after {
